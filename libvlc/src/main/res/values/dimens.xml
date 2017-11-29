@@ -1,0 +1,5 @@
+<resources>
+    <dimen name="text_size_13">13sp</dimen>
+    <dimen name="media_controller_top_height">45dip</dimen>
+    <dimen name="media_controller_bottom_height">45dip</dimen>
+</resources>
