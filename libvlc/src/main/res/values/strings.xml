@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="not_support_cpu">您的手机处理器暂时不支持播放</string>
+    <string name="no_network">网络不可用</string>
+    <string name="buffer">缓冲</string>
+    <string name="buffering">缓冲中...</string>
+    <string name="error_video_play">视频读取错误，请检查网络或退出后重试！</string>
+    <string name="video_try_reconnect">视频读取错误,尝试重新读取...</string>
+</resources>

@@ -10,8 +10,11 @@ android {
         versionCode rootProject.ext.versionCode
         versionName rootProject.ext.versionName
     }
-
-
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['src/main/jniLibs']
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
@@ -21,8 +24,8 @@ android {
 }
 
 dependencies {
-    implementation 'com.android.support:appcompat-v7:26.1.0'
-    compile "com.android.support:support-annotations:$rootProject.ext.appCompatVersion"
+    implementation "com.android.support:support-annotations:$rootProject.ext.appCompatVersion"
+    implementation "com.android.support:support-v4:$rootProject.ext.appCompatVersion"
     compile 'io.reactivex.rxjava2:rxjava:2.1.6'
     compile 'io.reactivex.rxjava2:rxandroid:2.0.1'
 }

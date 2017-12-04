@@ -457,10 +457,10 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
                 break;
             case MediaPlayer.Event.SeekableChanged:
                 canSeek = event.getSeekable();
+                LogUtils.i(tag, "SeekableChanged=" + canSeek);
                 if (mMediaPlayer.getLength() > 0 && seekTime > mMediaPlayer.getLength()) {  //避免出错，特别是保存上一次播放位置时候，可能保存出错
                     mMediaPlayer.setTime(0);
                 }
-                LogUtils.i(tag, "SeekableChanged=" + canSeek);
                 break;
             case MediaPlayer.Event.PausableChanged:
                 canPause = event.getPausable();

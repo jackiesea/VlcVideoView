@@ -27,9 +27,9 @@
         android:padding="10dp"
         android:scaleType="centerInside"
         android:singleLine="true"
-        android:text="视频读取错误,尝试重新读取..."
-        android:textColor="@android:color/white"
-        android:textSize="13sp"
+        android:text="@string/video_try_reconnect"
+        android:textColor="@color/core_white"
+        android:textSize="@dimen/text_size_13"
         android:visibility="gone" />
 
     <!--缓冲显示-->
@@ -63,9 +63,9 @@
             android:marqueeRepeatLimit="0"
             android:scaleType="centerInside"
             android:singleLine="true"
-            android:text="缓冲中..."
-            android:textColor="@android:color/white"
-            android:textSize="13sp" />
+            android:text="@string/buffering"
+            android:textColor="@color/core_white"
+            android:textSize="@dimen/text_size_13" />
     </LinearLayout>
 
     <!--亮度、音量、进度-->
@@ -98,8 +98,8 @@
             android:marqueeRepeatLimit="0"
             android:scaleType="centerInside"
             android:singleLine="true"
-            android:textColor="@android:color/white"
-            android:textSize="13sp" />
+            android:textColor="@color/core_white"
+            android:textSize="@dimen/text_size_13" />
     </LinearLayout>
 
     <!--倍速播放-->
@@ -168,6 +168,7 @@
             android:layout_centerVertical="true"
             android:layout_toRightOf="@+id/video_back"
             android:textColor="@android:color/white" />
+
     </RelativeLayout>
 
     <!--播放器底部栏-->

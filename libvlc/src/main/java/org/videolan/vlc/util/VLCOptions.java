@@ -102,8 +102,8 @@ public class VLCOptions {
         /* XXX: why can't the default be fine ? #7792 */
         if (networkCaching > 0)
             options.add("--network-caching=" + networkCaching);
-//        options.add("--android-display-chroma");
-//        options.add(chroma);
+        options.add("--android-display-chroma");
+        options.add(chroma);
         options.add("--audio-resampler");
         options.add(getResampler());
 

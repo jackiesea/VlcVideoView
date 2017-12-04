@@ -47,6 +47,8 @@ import static org.videolan.vlc.util.SpConfig.PREFIX_VIDEO_PLAY_POSITION;
 
 /*@author：Mr.CSH*/
 public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarChangeListener, GestureDetector.OnGestureListener, View.OnClickListener {
+
+    //控件，因为不是activity，无法正常使用ButterKnife
     private VlcVideoView mVideoView;
     private RelativeLayout mRootLayout;
     private LinearLayout mBufferingLayout;
@@ -203,13 +205,13 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
      *
      * @param url            视频播放url
      * @param title          视频播放标题，如果无标题则传空
+     * @param userAccount    视频播放账户，用来保存视频播放位置的文件名；如果不保存视频播放位置，则userAccount和curPlayVideoId传空
      * @param curPlayVideoId 视频播放Id，用来保存视频播放位置的key值；如果不保存视频播放位置，则userAccount和curPlayVideoId传空
      */
     public void startPlayVideo(String url, String title, String userAccount, String curPlayVideoId) {
         if (!VLCInstance.testCompatibleCPU(mContext)) {
-            mCurPlayVideoId = "";
             mVideoPlayCallback.unSupportCPU();
-            Toast.makeText(mContext, "您的手机处理器暂时不支持播放", Toast.LENGTH_SHORT).show();
+            Toast.makeText(mContext, R.string.not_support_cpu, Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -578,7 +580,7 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
                     goOnPlay();
                 }
             } else {
-                Toast.makeText(mContext, "网络不可用", Toast.LENGTH_SHORT).show();
+                Toast.makeText(mContext, R.string.no_network, Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -678,7 +680,8 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
 
     public void onActivityDestroy() {
         saveVideoPlayPosition();
-        mVideoView.onDestory();
+//        mVideoView.onDestory();
+        mVideoView.onStop();
         CoreUtil.disposeSubscribe(mUpdateVideoTimeDis, mControllerDis);
     }
 
@@ -795,7 +798,7 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
                 if (mBufferingLayout.getVisibility() != VISIBLE) {
                     mBufferingLayout.setVisibility(VISIBLE);
                 }
-                mBufferingText.setText("缓冲" + " " + new DecimalFormat("0").format(buffing) + "%");
+                mBufferingText.setText(mContext.getString(R.string.buffer) + " " + new DecimalFormat("0").format(buffing) + "%");
                 setGestureEnable(false);    //缓冲时不允许手势操作
             } else {
                 if (mBufferingLayout.getVisibility() != GONE) {
@@ -840,7 +843,7 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
                         mIsVideoReconnecting = false;
                         mErrorText.setVisibility(GONE);
                         mVideoPlayCallback.onError();
-                        Toast.makeText(mContext, "视频读取错误，请检查网络或退出后重试！", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(mContext, R.string.error_video_play, Toast.LENGTH_SHORT).show();
                     }
                 }
             }
@@ -861,7 +864,6 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
 
             removeVideoPlayPosition();
 
-            mCurPlayVideoId = "";
             mVideoPlayCallback.onPlayComplete();
 
             setPlayState(EnumConfig.PlayState.PAUSE);
