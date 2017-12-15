@@ -20,6 +20,14 @@
 修复原生暂停后台播放问题
 ```
 
+# 使用方法
+```
+<org.videolan.vlc.MyVlcVideoView
+   android:id="@+id/video_view"
+   android:layout_width="match_parent"
+   android:layout_height="match_parent" />
+```
+
 ### DEMO效果预览
 ![](https://raw.githubusercontent.com/jackiesea/MrCSH_VlcVideoView/master/capture/1.png)
 ![](https://raw.githubusercontent.com/jackiesea/MrCSH_VlcVideoView/master/capture/2.png)
