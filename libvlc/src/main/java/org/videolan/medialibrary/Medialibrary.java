@@ -15,7 +15,6 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
 import android.util.Log;
 
-import org.videolan.libvlc.LibVLC;
 import org.videolan.libvlc.util.VLCUtil;
 import org.videolan.medialibrary.interfaces.DevicesDiscoveryCb;
 import org.videolan.medialibrary.interfaces.EntryPointsEventsCb;
@@ -39,12 +38,12 @@ public class Medialibrary {
 
     private static final String TAG = "VLC/JMedialibrary";
 
-    public static final int FLAG_MEDIA_UPDATED_AUDIO        = 1 << 0;
-    public static final int FLAG_MEDIA_UPDATED_AUDIO_EMPTY  = 1 << 1;
-    public static final int FLAG_MEDIA_UPDATED_VIDEO        = 1 << 2;
-    public static final int FLAG_MEDIA_ADDED_AUDIO          = 1 << 3;
-    public static final int FLAG_MEDIA_ADDED_AUDIO_EMPTY    = 1 << 4;
-    public static final int FLAG_MEDIA_ADDED_VIDEO          = 1 << 5;
+    public static final int FLAG_MEDIA_UPDATED_AUDIO = 1 << 0;
+    public static final int FLAG_MEDIA_UPDATED_AUDIO_EMPTY = 1 << 1;
+    public static final int FLAG_MEDIA_UPDATED_VIDEO = 1 << 2;
+    public static final int FLAG_MEDIA_ADDED_AUDIO = 1 << 3;
+    public static final int FLAG_MEDIA_ADDED_AUDIO_EMPTY = 1 << 4;
+    public static final int FLAG_MEDIA_ADDED_VIDEO = 1 << 5;
 
     public static final int ML_INIT_SUCCESS = 0;
     public static final int ML_INIT_ALREADY_INITIALIZED = 1;
@@ -57,7 +56,6 @@ public class Medialibrary {
     public static final MediaWrapper[] EMPTY_COLLECTION = {};
     public static final String VLC_MEDIA_DB_NAME = "/vlc_media.db";
     public static final String THUMBS_FOLDER_NAME = "/thumbs";
-
 
     private long mInstanceID;
     private volatile boolean mIsInitiated = false;
@@ -88,7 +86,7 @@ public class Medialibrary {
         if (extFilesDir == null || !extFilesDir.exists()
                 || dbDirectory == null || !dbDirectory.canWrite())
             return ML_INIT_FAILED;
-        int initCode = nativeInit(dbDirectory+ VLC_MEDIA_DB_NAME, extFilesDir+ THUMBS_FOLDER_NAME);
+        int initCode = nativeInit(dbDirectory + VLC_MEDIA_DB_NAME, extFilesDir + THUMBS_FOLDER_NAME);
         mIsInitiated = initCode != ML_INIT_FAILED;
         return initCode;
     }
@@ -99,7 +97,12 @@ public class Medialibrary {
 
     public void banFolder(@NonNull String path) {
         if (mIsInitiated && new File(path).exists())
-            nativeBanFolder(Tools.encodeVLCMrl(path));
+            nativeBanFolder(Tools.encodeVLCMrl(Uri.encode(path, "/")));
+    }
+
+    public void unbanFolder(@NonNull String path) {
+        if (mIsInitiated && new File(path).exists())
+            nativeUnbanFolder(Tools.encodeVLCMrl(Uri.encode(path, "/")));
     }
 
     public String[] getDevices() {
@@ -233,7 +236,7 @@ public class Medialibrary {
 
     public void reload(String entryPoint) {
         if (mIsInitiated && !TextUtils.isEmpty(entryPoint))
-            nativeReload(entryPoint);
+            nativeReload(Tools.encodeVLCMrl(entryPoint));
     }
 
     public void forceParserRetry() {
@@ -326,7 +329,7 @@ public class Medialibrary {
 
     public void onMediaDeleted(long[] ids) {
         for (long id : ids)
-            Log.d(TAG, "onMediaDeleted: "+id);
+            Log.d(TAG, "onMediaDeleted: " + id);
     }
 
     public void onArtistsAdded() {
@@ -351,12 +354,12 @@ public class Medialibrary {
 
     public void onArtistsDeleted(long[] ids) {
         for (long id : ids)
-            Log.d(TAG, "onArtistsDeleted: "+id);
+            Log.d(TAG, "onArtistsDeleted: " + id);
     }
 
     public void onAlbumsDeleted(long[] ids) {
         for (long id : ids)
-            Log.d(TAG, "onAlbumsDeleted: "+id);
+            Log.d(TAG, "onAlbumsDeleted: " + id);
     }
 
     public void onDiscoveryStarted(String entryPoint) {
@@ -419,6 +422,7 @@ public class Medialibrary {
                     cb.onReloadStarted(entryPoint);
         }
     }
+
     void onReloadCompleted(String entryPoint) {
         synchronized (devicesDiscoveryCbList) {
             if (!devicesDiscoveryCbList.isEmpty())
@@ -434,6 +438,7 @@ public class Medialibrary {
                     cb.onEntryPointBanned(entryPoint, success);
         }
     }
+
     void onEntryPointUnbanned(String entryPoint, boolean success) {
         synchronized (entryPointsEventsCbList) {
             if (!entryPointsEventsCbList.isEmpty())
@@ -441,6 +446,7 @@ public class Medialibrary {
                     cb.onEntryPointUnbanned(entryPoint, success);
         }
     }
+
     void onEntryPointRemoved(String entryPoint, boolean success) {
         synchronized (entryPointsEventsCbList) {
             if (!entryPointsEventsCbList.isEmpty())
@@ -554,7 +560,7 @@ public class Medialibrary {
     }
 
     public static String[] getBlackList() {
-        return new String[] {
+        return new String[]{
                 "/Android/data/",
                 "/Android/media/",
                 "/Alarms/",
@@ -569,6 +575,7 @@ public class Medialibrary {
                 "/audio/alarms/",
                 "/audio/ringtones/",
                 "/audio/notifications/",
+                "/WhatsApp/Media/WhatsApp Animated Gifs/",
         };
     }
 
@@ -588,53 +595,99 @@ public class Medialibrary {
         return new WeakReference<>(this);
     }
 
-
     // Native methods
     private native int nativeInit(String dbPath, String thumbsPath);
+
     private native void nativeStart();
+
     private native void nativeRelease();
+
     private native void nativeBanFolder(String path);
+
+    private native void nativeUnbanFolder(String path);
+
     private native boolean nativeAddDevice(String uuid, String path, boolean removable);
+
     private native String[] nativeDevices();
+
     private native void nativeDiscover(String path);
+
     private native void nativeRemoveEntryPoint(String path);
+
     private native String[] nativeEntryPoints();
+
     private native boolean nativeRemoveDevice(String uuid);
+
     private native MediaWrapper[] nativeLastMediaPlayed();
+
     private native HistoryItem[] nativeLastStreamsPlayed();
-    private native  boolean nativeAddToHistory(String mrl, String title);
-    private native  boolean nativeClearHistory();
+
+    private native boolean nativeAddToHistory(String mrl, String title);
+
+    private native boolean nativeClearHistory();
+
     private native MediaWrapper nativeGetMedia(long id);
+
     private native MediaWrapper nativeGetMediaFromMrl(String mrl);
+
     private native MediaWrapper nativeAddMedia(String mrl);
+
     private native MediaWrapper[] nativeGetVideos();
+
     private native MediaWrapper[] nativeGetRecentVideos();
+
     private native MediaWrapper[] nativeGetAudio();
+
     private native MediaWrapper[] nativeGetRecentAudio();
+
     private native int nativeGetVideoCount();
+
     private native int nativeGetAudioCount();
+
     private native Album[] nativeGetAlbums();
+
     private native Album nativeGetAlbum(long albumtId);
+
     private native Artist[] nativeGetArtists();
+
     private native Artist nativeGetArtist(long artistId);
+
     private native Genre[] nativeGetGenres();
+
     private native Genre nativeGetGenre(long genreId);
+
     private native Playlist[] nativeGetPlaylists();
+
     private native Playlist nativeGetPlaylist(long playlistId);
+
     private native Playlist nativePlaylistCreate(String name);
+
     private native void nativePauseBackgroundOperations();
+
     private native void nativeResumeBackgroundOperations();
+
     private native void nativeReload();
+
     private native void nativeReload(String entryPoint);
+
     private native void nativeForceParserRetry();
+
     private native boolean nativeIncreasePlayCount(long mediaId);
+
     private native void nativeSetMediaUpdatedCbFlag(int flags);
+
     private native void nativeSetMediaAddedCbFlag(int flags);
+
     private native SearchAggregate nativeSearch(String query);
+
     private native MediaSearchAggregate nativeSearchMedia(String query);
+
     private native Artist[] nativeSearchArtist(String query);
+
     private native Album[] nativeSearchAlbum(String query);
+
     private native Genre[] nativeSearchGenre(String query);
+
     private native Playlist[] nativeSearchPlaylist(String query);
 
     private boolean canReadStorage(Context context) {

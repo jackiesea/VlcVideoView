@@ -1,6 +1,5 @@
 package org.videolan.medialibrary;
 
-
 import android.net.Uri;
 import android.os.Environment;
 import android.support.annotation.Nullable;
@@ -19,6 +18,7 @@ public class Tools {
     private static final String TAG = "VLC/Tools";
     private static StringBuilder sb = new StringBuilder();
     private static DecimalFormat format = (DecimalFormat) NumberFormat.getInstance(Locale.US);
+
     static {
         format.applyPattern("00");
     }
@@ -36,6 +36,7 @@ public class Tools {
     public static boolean isArrayEmpty(@Nullable Object[] array) {
         return array == null || array.length == 0;
     }
+
     public static String getProgressText(MediaWrapper media) {
         long lastTime = media.getTime();
         if (lastTime == 0L)
@@ -47,6 +48,7 @@ public class Tools {
 
     /**
      * Convert time to a string
+     *
      * @param millis e.g.time/length from file
      * @return formated string (hh:)mm:ss
      */
@@ -56,6 +58,7 @@ public class Tools {
 
     /**
      * Convert time to a string
+     *
      * @param millis e.g.time/length from file
      * @return formated string "[hh]h[mm]min" / "[mm]min[s]s"
      */
@@ -69,7 +72,7 @@ public class Tools {
         return "";
     }
 
-    public static void setMediaDescription (MediaLibraryItem item) {
+    public static void setMediaDescription(MediaLibraryItem item) {
         if (item.getItemType() == MediaLibraryItem.TYPE_MEDIA) {
             MediaWrapper mw = (MediaWrapper) item;
             if (mw.getType() == MediaWrapper.TYPE_VIDEO) {
@@ -77,7 +80,7 @@ public class Tools {
                 String resolution = getResolution(mw);
                 boolean hasprogress = !TextUtils.isEmpty(progress), hasResolution = !TextUtils.isEmpty(resolution);
                 if (hasprogress && hasResolution)
-                    item.setDescription(resolution+" - "+progress);
+                    item.setDescription(resolution + " - " + progress);
                 else if (hasprogress)
                     item.setDescription(progress);
                 else
@@ -86,7 +89,7 @@ public class Tools {
                 String artist = mw.getReferenceArtist(), album = mw.getAlbum();
                 boolean hasArtist = !TextUtils.isEmpty(artist), hasAlbum = !TextUtils.isEmpty(album);
                 if (hasArtist && hasAlbum)
-                    item.setDescription(album+" - "+artist);
+                    item.setDescription(album + " - " + artist);
                 else if (hasArtist)
                     item.setDescription(artist);
                 else
@@ -127,7 +130,7 @@ public class Tools {
 
     public static String encodeVLCMrl(String mrl) {
         if (mrl.startsWith("/"))
-            mrl = "file://"+mrl;
+            mrl = "file://" + mrl;
         return VLCUtil.encodeVLCString(mrl);
     }
 }

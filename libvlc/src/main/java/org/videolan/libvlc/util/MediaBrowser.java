@@ -1,23 +1,3 @@
-/*****************************************************************************
- * MediaBrowser.java
- *****************************************************************************
- * Copyright © 2015 VLC authors, VideoLAN and VideoLabs
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
- *****************************************************************************/
-
 package org.videolan.libvlc.util;
 
 import android.net.Uri;
@@ -44,15 +24,21 @@ public class MediaBrowser {
     private Handler mHandler;
     private boolean mAlive;
 
-    private static final String IGNORE_LIST_OPTION =  ":ignore-filetypes=";
+    private static final String IGNORE_LIST_OPTION = ":ignore-filetypes=";
     private String mIgnoreList = "db,nfo,ini,jpg,jpeg,ljpg,gif,png,pgm,pgmyuv,pbm,pam,tga,bmp,pnm,xpm,xcf,pcx,tif,tiff,lbm,sfv,txt,sub,idx,srt,ssa,ass,smi,utf,utf-8,rt,aqt,txt,usf,jss,cdg,psb,mpsub,mpl2,pjs,dks,stl,vtt,ttml";
 
     public static class Flag {
-        /** If this flag is set, browse() could fire up dialogs */
+        /**
+         * If this flag is set, browse() could fire up dialogs
+         */
         public final static int Interact = 1;
-        /** If this flag is set, slaves won't be attached to medias but will be added as a media. */
+        /**
+         * If this flag is set, slaves won't be attached to medias but will be added as a media.
+         */
         public final static int NoSlavesAutodetect = 1 << 1;
-        /** If this flag is set, hidden fils won't be ignored */
+        /**
+         * If this flag is set, hidden fils won't be ignored
+         */
         public final static int ShowHiddenFiles = 1 << 2;
     }
 
@@ -62,17 +48,21 @@ public class MediaBrowser {
     public interface EventListener {
         /**
          * Received when a new media is added.
+         *
          * @param index
          * @param media
          */
         void onMediaAdded(int index, Media media);
+
         /**
          * Received when a media is removed (Happens only when you discover networks)
+         *
          * @param index
          * @param media Released media, but cached attributes are still
-         * available (like media.getMrl())
+         *              available (like media.getMrl())
          */
         void onMediaRemoved(int index, Media media);
+
         /**
          * Called when browse ended.
          * It won't be called when you discover networks
@@ -80,12 +70,11 @@ public class MediaBrowser {
         void onBrowseEnd();
     }
 
-     /**
-     *
-     * @param libvlc The LibVLC instance to use
+    /**
+     * @param libvlc   The LibVLC instance to use
      * @param listener The Listener which will receive callbacks
-     *
-     * With this constructor, callbacks will be executed in the main thread
+     *                 <p>
+     *                 With this constructor, callbacks will be executed in the main thread
      */
     public MediaBrowser(LibVLC libvlc, EventListener listener) {
         mLibVlc = libvlc;
@@ -95,10 +84,9 @@ public class MediaBrowser {
     }
 
     /**
-     *
-     * @param libvlc The LibVLC instance to use
+     * @param libvlc   The LibVLC instance to use
      * @param listener The Listener which will receive callbacks
-     * @param handler Optional Handler in which callbacks will be posted. If set to null, a Handler will be created running on the main thread
+     * @param handler  Optional Handler in which callbacks will be posted. If set to null, a Handler will be created running on the main thread
      */
     public MediaBrowser(LibVLC libvlc, EventListener listener, Handler handler) {
         this(libvlc, listener);
@@ -135,10 +123,11 @@ public class MediaBrowser {
 
     /**
      * Reset this media browser and register a new EventListener
+     *
      * @param eventListener new EventListener for this browser
      */
     @MainThread
-    public void changeEventListener(EventListener eventListener){
+    public void changeEventListener(EventListener eventListener) {
         reset();
         mEventListener = eventListener;
     }
@@ -171,6 +160,7 @@ public class MediaBrowser {
 
     /**
      * Discover networks shares using a specified Discoverer
+     *
      * @param serviceName see {@link MediaDiscoverer.Description.Category#name}
      */
     @MainThread
@@ -272,14 +262,14 @@ public class MediaBrowser {
             final MediaList.Event mlEvent = event;
 
             switch (mlEvent.type) {
-            case MediaList.Event.ItemAdded:
-                mEventListener.onMediaAdded(mlEvent.index, mlEvent.media);
-                break;
-            case MediaList.Event.ItemDeleted:
-                mEventListener.onMediaRemoved(mlEvent.index, mlEvent.media);
-                break;
-            case MediaList.Event.EndReached:
-                mEventListener.onBrowseEnd();
+                case MediaList.Event.ItemAdded:
+                    mEventListener.onMediaAdded(mlEvent.index, mlEvent.media);
+                    break;
+                case MediaList.Event.ItemDeleted:
+                    mEventListener.onMediaRemoved(mlEvent.index, mlEvent.media);
+                    break;
+                case MediaList.Event.EndReached:
+                    mEventListener.onBrowseEnd();
             }
         }
     };
@@ -296,19 +286,19 @@ public class MediaBrowser {
              * We use an intermediate array here since more than one MediaDiscoverer can be used
              */
             switch (mlEvent.type) {
-            case MediaList.Event.ItemAdded:
-                mDiscovererMediaArray.add(mlEvent.media);
-                mEventListener.onMediaAdded(index, mlEvent.media);
-                break;
-            case MediaList.Event.ItemDeleted:
-                index = mDiscovererMediaArray.indexOf(mlEvent.media);
-                if (index != -1)
-                    mDiscovererMediaArray.remove(index);
-                if (index != -1)
-                    mEventListener.onMediaRemoved(index, mlEvent.media);
-                break;
-            case MediaList.Event.EndReached:
-                mEventListener.onBrowseEnd();
+                case MediaList.Event.ItemAdded:
+                    mDiscovererMediaArray.add(mlEvent.media);
+                    mEventListener.onMediaAdded(index, mlEvent.media);
+                    break;
+                case MediaList.Event.ItemDeleted:
+                    index = mDiscovererMediaArray.indexOf(mlEvent.media);
+                    if (index != -1)
+                        mDiscovererMediaArray.remove(index);
+                    if (index != -1)
+                        mEventListener.onMediaRemoved(index, mlEvent.media);
+                    break;
+                case MediaList.Event.EndReached:
+                    mEventListener.onBrowseEnd();
             }
         }
     };

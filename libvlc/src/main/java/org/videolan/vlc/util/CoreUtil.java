@@ -8,10 +8,6 @@ import android.view.WindowManager;
 
 import io.reactivex.disposables.Disposable;
 
-/**
- * Created by Mr.CSH on 2017/11/28.
- */
-
 public class CoreUtil {
     //解注册观察者模式网络请求
     public static void disposeSubscribe(Disposable... disposables) {

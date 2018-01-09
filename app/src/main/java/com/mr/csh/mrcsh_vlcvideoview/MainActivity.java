@@ -20,6 +20,7 @@ import android.widget.Toast;
 import org.videolan.vlc.MyVlcVideoView;
 import org.videolan.vlc.util.CoreUtil;
 import org.videolan.vlc.util.DensityUtil;
+import org.videolan.vlc.util.EnumConfig;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -79,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if (!mVideoView.getCurPlayVideoId().isEmpty()) {
-            mVideoView.onActivityResume();
+            mVideoView.start();
         }
     }
 
@@ -87,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         if (!mVideoView.getCurPlayVideoId().isEmpty()) {
-            mVideoView.onActivityPause();
+            mVideoView.pause();
         }
     }
 
@@ -118,20 +119,7 @@ public class MainActivity extends AppCompatActivity {
     private void readyPlayVideo() {
         boolean isWifiConnected = CoreUtil.isWifiConnected(this);
         if (/*!isLocalVideo &&*/ !isWifiConnected && !mIsNoWifiPlay) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("提示");
-            builder.setMessage("wifi未开启，继续播放将产生流量，是否要这样做？");
-            builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    dialog.dismiss();
-                    mIsNoWifiPlay = true;
-                    mVideoView.setIsNoWifiPlay(true);
-                    startVideoPlay();
-                }
-            });
-            builder.setNegativeButton("取消", null);
-            builder.create().show();
+            showUnWifiPlayDialog(true);
         } else {
             startVideoPlay();
         }
@@ -147,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             //视频未播放或者暂停不处理网络变化
-            if (mVideoView.getCurPlayVideoId().isEmpty() && mVideoView.getPlayState() != org.videolan.vlc.util.EnumConfig.PlayState.PLAY) {
+            if (mVideoView.getCurPlayVideoId().isEmpty() && mVideoView.getPlayState() != EnumConfig.PlayState.STATE_PLAY) {
                 return;
             }
 
@@ -160,27 +148,35 @@ public class MainActivity extends AppCompatActivity {
             boolean isNetAvailable = CoreUtil.isNetworkAvailable(mActivity);
 
             if (!isWifiConnected && !mIsNoWifiPlay) {
-                mVideoView.setVideoPause();
+                mVideoView.pause();
 
                 if (isNetAvailable) {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
-                    builder.setTitle("提示");
-                    builder.setMessage("wifi未开启，继续播放将产生流量，是否要这样做？");
-                    builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.dismiss();
-                            mIsNoWifiPlay = true;
-                            mVideoView.setIsNoWifiPlay(true);
-                            mVideoView.goOnPlay();
-                        }
-                    });
-                    builder.setNegativeButton("取消", null);
-                    builder.create().show();
+                    showUnWifiPlayDialog(false);
                 }
             }
         }
     };
+
+    private void showUnWifiPlayDialog(final boolean isHeadStart) {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
+        builder.setTitle("提示");
+        builder.setMessage("wifi未开启，继续播放将产生流量，是否要这样做？");
+        builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                mIsNoWifiPlay = true;
+                mVideoView.setIsNoWifiPlay(true);
+                if (isHeadStart) {
+                    startVideoPlay();
+                } else {
+                    mVideoView.start();
+                }
+            }
+        });
+        builder.setNegativeButton("取消", null);
+        builder.create().show();
+    }
 
     private MyVlcVideoView.VideoPlayCallbackImpl mVideoPlayCallback = new MyVlcVideoView.VideoPlayCallbackImpl() {
 
@@ -250,6 +246,6 @@ public class MainActivity extends AppCompatActivity {
         if (myNetReceiver != null) {
             unregisterReceiver(myNetReceiver);
         }
-        mVideoView.onActivityDestroy();
+        mVideoView.stop();
     }
 }

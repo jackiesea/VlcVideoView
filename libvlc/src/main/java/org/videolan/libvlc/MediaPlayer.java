@@ -1,25 +1,3 @@
-/*****************************************************************************
- * MediaPlayer.java
- *****************************************************************************
- * Copyright © 2015 VLC authors and VideoLAN
- *
- * Authors  Jean-Baptiste Kempf <jb@videolan.org>
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
- *****************************************************************************/
-
 package org.videolan.libvlc;
 
 import android.annotation.TargetApi;
@@ -45,33 +23,34 @@ import java.io.File;
 public class MediaPlayer extends VLCObject<MediaPlayer.Event> {
 
     public static class Event extends VLCEvent {
-        public static final int MediaChanged        = 0x100;
+        public static final int MediaChanged = 0x100;
         //public static final int NothingSpecial      = 0x101;
-        public static final int Opening             = 0x102;
-        public static final int Buffering           = 0x103;
-        public static final int Playing             = 0x104;
-        public static final int Paused              = 0x105;
-        public static final int Stopped             = 0x106;
+        public static final int Opening = 0x102;
+        public static final int Buffering = 0x103;
+        public static final int Playing = 0x104;
+        public static final int Paused = 0x105;
+        public static final int Stopped = 0x106;
         //public static final int Forward             = 0x107;
         //public static final int Backward            = 0x108;
-        public static final int EndReached          = 0x109;
-        public static final int EncounteredError   = 0x10a;
-        public static final int TimeChanged         = 0x10b;
-        public static final int PositionChanged     = 0x10c;
-        public static final int SeekableChanged     = 0x10d;
-        public static final int PausableChanged     = 0x10e;
+        public static final int EndReached = 0x109;
+        public static final int EncounteredError = 0x10a;
+        public static final int TimeChanged = 0x10b;
+        public static final int PositionChanged = 0x10c;
+        public static final int SeekableChanged = 0x10d;
+        public static final int PausableChanged = 0x10e;
         //public static final int TitleChanged        = 0x10f;
         //public static final int SnapshotTaken       = 0x110;
         //public static final int LengthChanged       = 0x111;
-        public static final int Vout                = 0x112;
+        public static final int Vout = 0x112;
         //public static final int ScrambledChanged    = 0x113;
-        public static final int ESAdded             = 0x114;
-        public static final int ESDeleted           = 0x115;
-        public static final int ESSelected          = 0x116;
+        public static final int ESAdded = 0x114;
+        public static final int ESDeleted = 0x115;
+        public static final int ESSelected = 0x116;
 
         protected Event(int type) {
             super(type);
         }
+
         protected Event(int type, long arg1) {
             super(type, arg1);
         }
@@ -87,30 +66,38 @@ public class MediaPlayer extends VLCObject<MediaPlayer.Event> {
         public long getTimeChanged() {
             return arg1;
         }
+
         public float getPositionChanged() {
             return argf1;
         }
+
         public int getVoutCount() {
             return (int) arg1;
         }
+
         public int getEsChangedType() {
             return (int) arg1;
         }
+
         public int getEsChangedID() {
             return (int) arg2;
         }
+
         public boolean getPausable() {
             return arg1 != 0;
         }
+
         public boolean getSeekable() {
             return arg1 != 0;
         }
+
         public float getBuffering() {
             return argf1;
         }
     }
 
-    public interface EventListener extends VLCEvent.Listener<MediaPlayer.Event> {}
+    public interface EventListener extends VLCEvent.Listener<MediaPlayer.Event> {
+    }
 
     public static class Position {
         public static final int Disable = -1;
@@ -137,7 +124,9 @@ public class MediaPlayer extends VLCObject<MediaPlayer.Event> {
         private static class Flags {
             public static final int MENU = 0x01;
             public static final int INTERACTIVE = 0x02;
-        };
+        }
+
+        ;
         /**
          * duration in milliseconds
          */
@@ -268,7 +257,7 @@ public class MediaPlayer extends VLCObject<MediaPlayer.Event> {
          * This name can be used, for example, to prepare a preset label or menu in a user
          * interface.
          *
-         * @param  index index of the preset, counting from zero.
+         * @param index index of the preset, counting from zero.
          * @return preset name, or NULL if there is no such preset
          */
 
@@ -334,23 +323,33 @@ public class MediaPlayer extends VLCObject<MediaPlayer.Event> {
          * The supplied amplification value will be clamped to the -20.0 to +20.0 range.
          *
          * @param index counting from zero, of the frequency band to set.
-         * @param amp amplification value (-20.0 to 20.0 Hz).
-         * \return true on success.
+         * @param amp   amplification value (-20.0 to 20.0 Hz).
+         *              \return true on success.
          */
         public boolean setAmp(int index, float amp) {
             return nativeSetAmp(index, amp);
         }
 
         private static native int nativeGetPresetCount();
+
         private static native String nativeGetPresetName(int index);
+
         private static native int nativeGetBandCount();
+
         private static native float nativeGetBandFrequency(int index);
+
         private native void nativeNew();
+
         private native void nativeNewFromPreset(int index);
+
         private native void nativeRelease();
+
         private native float nativeGetPreAmp();
+
         private native boolean nativeSetPreAmp(float preamp);
+
         private native float nativeGetAmp(int index);
+
         private native boolean nativeSetAmp(int index, float amp);
     }
 
@@ -589,7 +588,6 @@ public class MediaPlayer extends VLCObject<MediaPlayer.Event> {
 
     /**
      * Play the media
-     *
      */
     public void play() {
         synchronized (this) {
@@ -615,7 +613,6 @@ public class MediaPlayer extends VLCObject<MediaPlayer.Event> {
 
     /**
      * Stops the playing media
-     *
      */
     public void stop() {
         synchronized (this) {
@@ -648,7 +645,7 @@ public class MediaPlayer extends VLCObject<MediaPlayer.Event> {
 
     /**
      * Set the video scaling factor
-     *
+     * <p>
      * That is the ratio of the number of pixels on screen to the number of pixels in the original
      * decoded video in each dimension. Zero is a special value; it will adjust the video to the
      * output window/drawable (in windowed mode) or the entire screen.
@@ -680,10 +677,10 @@ public class MediaPlayer extends VLCObject<MediaPlayer.Event> {
     /**
      * Update the video viewpoint information
      *
-     * @param yaw View point yaw in degrees
-     * @param pitch View point pitch in degrees
-     * @param roll  View point roll in degrees
-     * @param fov Field of view in degrees (default 80.0f)
+     * @param yaw      View point yaw in degrees
+     * @param pitch    View point pitch in degrees
+     * @param roll     View point roll in degrees
+     * @param fov      Field of view in degrees (default 80.0f)
      * @param absolute if true replace the old viewpoint with the new one. If false,
      *                 increase/decrease it.
      * @return true on success.
@@ -691,15 +688,15 @@ public class MediaPlayer extends VLCObject<MediaPlayer.Event> {
     public boolean updateViewpoint(float yaw, float pitch, float roll, float fov, boolean absolute) {
         return nativeUpdateViewpoint(yaw, pitch, roll, fov, absolute);
     }
-    
+
     /**
      * Selects an audio output module.
      * Any change will take effect only after playback is stopped and
      * restarted. Audio output cannot be changed while playing.
-     *
+     * <p>
      * By default, the "android_audiotrack" is selected. Starting Android 21, passthrough is
      * enabled for encodings supported by the device/audio system.
-     *
+     * <p>
      * Calling this method will disable the encoding detection.
      *
      * @return true on success.
@@ -732,22 +729,22 @@ public class MediaPlayer extends VLCObject<MediaPlayer.Event> {
         return ret;
     }
 
-        /**
-         * Configures an explicit audio output device.
-         * Audio output will be moved to the device specified by the device identifier string.
-         *
-         * Available devices for the "android_audiotrack" module (the default) are
-         * "stereo": Up to 2 channels (compat mode).
-         * "pcm": Up to 8 channels.
-         * "encoded": Up to 8 channels, passthrough for every encodings if available.
-         * "encoded:ENCODING_FLAGS_MASK": passthrough for every encodings specified by
-         * ENCODING_FLAGS_MASK. This extra value is a long that contains binary-shifted
-         * AudioFormat.ENCODING_* values.
-         *
-         * Calling this method will disable the encoding detection (see {@link #setAudioOutput}).
-         *
-         * @return true on success.
-         */
+    /**
+     * Configures an explicit audio output device.
+     * Audio output will be moved to the device specified by the device identifier string.
+     * <p>
+     * Available devices for the "android_audiotrack" module (the default) are
+     * "stereo": Up to 2 channels (compat mode).
+     * "pcm": Up to 8 channels.
+     * "encoded": Up to 8 channels, passthrough for every encodings if available.
+     * "encoded:ENCODING_FLAGS_MASK": passthrough for every encodings specified by
+     * ENCODING_FLAGS_MASK. This extra value is a long that contains binary-shifted
+     * AudioFormat.ENCODING_* values.
+     * <p>
+     * Calling this method will disable the encoding detection (see {@link #setAudioOutput}).
+     *
+     * @return true on success.
+     */
     public boolean setAudioOutputDevice(String id) {
         return setAudioOutputDeviceInternal(id, true);
     }
@@ -837,7 +834,7 @@ public class MediaPlayer extends VLCObject<MediaPlayer.Event> {
             return null;
         final int trackCount = mMedia.getTrackCount();
         for (int i = 0; i < trackCount; ++i) {
-            final Media.Track  track = mMedia.getTrack(i);
+            final Media.Track track = mMedia.getTrack(i);
             if (track.type == Media.Track.Type.Video)
                 return (Media.VideoTrack) track;
         }
@@ -948,21 +945,21 @@ public class MediaPlayer extends VLCObject<MediaPlayer.Event> {
 
     /**
      * Apply new equalizer settings to a media player.
-     *
+     * <p>
      * The equalizer is first created by invoking {@link Equalizer#create()} or
      * {@link Equalizer#createFromPreset(int)}}.
-     *
+     * <p>
      * It is possible to apply new equalizer settings to a media player whether the media
      * player is currently playing media or not.
-     *
+     * <p>
      * Invoking this method will immediately apply the new equalizer settings to the audio
      * output of the currently playing media if there is any.
-     *
+     * <p>
      * If there is no currently playing media, the new equalizer settings will be applied
      * later if and when new media is played.
-     *
+     * <p>
      * Equalizer settings will automatically be applied to subsequently played media.
-     *
+     * <p>
      * To disable the equalizer for a media player invoke this method passing null.
      *
      * @return true on success.
@@ -975,7 +972,7 @@ public class MediaPlayer extends VLCObject<MediaPlayer.Event> {
      * Add a slave (or subtitle) to the current media player.
      *
      * @param type see {@link org.videolan.libvlc.Media.Slave.Type}
-     * @param uri a valid RFC 2396 Uri
+     * @param uri  a valid RFC 2396 Uri
      * @return true on success.
      */
     public boolean addSlave(int type, Uri uri, boolean select) {
@@ -998,7 +995,7 @@ public class MediaPlayer extends VLCObject<MediaPlayer.Event> {
      *
      * @param rate
      */
-        public native void setRate(float rate);
+    public native void setRate(float rate);
 
     /**
      * Get the current playback speed
@@ -1032,18 +1029,21 @@ public class MediaPlayer extends VLCObject<MediaPlayer.Event> {
 
     /**
      * Sets volume as integer
+     *
      * @param volume: Volume level passed as integer
      */
     public native int setVolume(int volume);
 
     /**
      * Gets the current movie time (in ms).
+     *
      * @return the movie time (in ms), or -1 if there is no media.
      */
     public native long getTime();
 
     /**
      * Sets the movie time (in ms), if any media is being played.
+     *
      * @param time: Time in ms.
      * @return the movie time (in ms), or -1 if there is no media.
      */
@@ -1051,28 +1051,37 @@ public class MediaPlayer extends VLCObject<MediaPlayer.Event> {
 
     /**
      * Gets the movie position.
+     *
      * @return the movie position, or -1 for any error.
      */
     public native float getPosition();
 
     /**
      * Sets the movie position.
+     *
      * @param pos: movie position.
      */
     public native void setPosition(float pos);
 
     /**
      * Gets current movie's length in ms.
+     *
      * @return the movie length (in ms), or -1 if there is no media.
      */
     public native long getLength();
 
     public native int getTitle();
+
     public native void setTitle(int title);
+
     public native int getChapter();
+
     public native int previousChapter();
+
     public native int nextChapter();
+
     public native void setChapter(int chapter);
+
     public native void navigate(int navigate);
 
     public synchronized void setEventListener(EventListener listener) {
@@ -1125,37 +1134,70 @@ public class MediaPlayer extends VLCObject<MediaPlayer.Event> {
 
     /* JNI */
     private native void nativeNewFromLibVlc(LibVLC libVLC, AWindow window);
+
     private native void nativeNewFromMedia(Media media, AWindow window);
+
     private native void nativeRelease();
+
     private native void nativeSetMedia(Media media);
+
     private native void nativePlay();
+
     private native void nativeStop();
+
     private native void nativeSetVideoTitleDisplay(int position, int timeout);
+
     private native float nativeGetScale();
+
     private native void nativeSetScale(float scale);
+
     private native String nativeGetAspectRatio();
+
     private native void nativeSetAspectRatio(String aspect);
+
     private native boolean nativeUpdateViewpoint(float yaw, float pitch, float roll, float fov, boolean absolute);
+
     private native boolean nativeSetAudioOutput(String aout);
+
     private native boolean nativeSetAudioOutputDevice(String id);
+
     private native Title[] nativeGetTitles();
+
     private native Chapter[] nativeGetChapters(int title);
+
     private native int nativeGetVideoTracksCount();
+
     private native TrackDescription[] nativeGetVideoTracks();
+
     private native int nativeGetVideoTrack();
+
     private native boolean nativeSetVideoTrack(int index);
+
     private native int nativeGetAudioTracksCount();
+
     private native TrackDescription[] nativeGetAudioTracks();
+
     private native int nativeGetAudioTrack();
+
     private native boolean nativeSetAudioTrack(int index);
+
     private native long nativeGetAudioDelay();
+
     private native boolean nativeSetAudioDelay(long delay);
+
     private native int nativeGetSpuTracksCount();
+
     private native TrackDescription[] nativeGetSpuTracks();
+
     private native int nativeGetSpuTrack();
+
     private native boolean nativeSetSpuTrack(int index);
+
     private native long nativeGetSpuDelay();
+
     private native boolean nativeSetSpuDelay(long delay);
+
     private native boolean nativeAddSlave(int type, String location, boolean select);
+
     private native boolean nativeSetEqualizer(Equalizer equalizer);
 }

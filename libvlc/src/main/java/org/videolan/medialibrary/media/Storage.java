@@ -1,6 +1,5 @@
 package org.videolan.medialibrary.media;
 
-
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -20,7 +19,7 @@ public class Storage extends MediaLibraryItem {
         return TYPE_STORAGE;
     }
 
-    public Storage(Uri uri){
+    public Storage(Uri uri) {
         this.uri = uri;
         mTitle = uri.getLastPathSegment();
     }

@@ -1,9 +1,5 @@
 package org.videolan.vlc.util;
 
-/**
- * Created by caoshuang on 2017/3/20.
- */
-
 public class EnumConfig {
     //播放样式 展开、缩放
     public class PageType {
@@ -18,10 +14,11 @@ public class EnumConfig {
         public final static int STOP = 2;
     }
 
-    //播放状态，pause和stop用来判断判断操作播放键的功能
     public class PlayState {
-        public final static int PLAY = 1;
-        public final static int PAUSE = 1;
-        public final static int STOP = 2;
+        public static final int STATE_PLAY = 1;
+        public static final int STATE_PAUSE = 2;
+        public static final int STATE_LOAD = 3;
+        public static final int STATE_RESUME = 4;
+        public static final int STATE_STOP = 5;
     }
 }

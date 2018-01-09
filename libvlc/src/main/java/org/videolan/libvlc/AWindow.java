@@ -1,23 +1,3 @@
-/*****************************************************************************
- * class AWindow.java
- *****************************************************************************
- * Copyright © 2015 VLC authors, VideoLAN and VideoLabs
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
- *****************************************************************************/
-
 package org.videolan.libvlc;
 
 import android.annotation.TargetApi;
@@ -48,6 +28,7 @@ public class AWindow implements IVLCVout {
     interface SurfaceCallback {
         @MainThread
         void onSurfacesCreated(AWindow vout);
+
         @MainThread
         void onSurfacesDestroyed(AWindow vout);
     }
@@ -211,9 +192,10 @@ public class AWindow implements IVLCVout {
 
     /**
      * Create an AWindow
-     *
+     * <p>
      * You call this directly only if you use the libvlc_media_player native API (and not the Java
      * MediaPlayer class).
+     *
      * @param surfaceCallback
      */
     public AWindow(SurfaceCallback surfaceCallback) {
@@ -439,6 +421,7 @@ public class AWindow implements IVLCVout {
         private boolean buffersGeometryConfigured = false;
         private boolean buffersGeometryAbort = false;
     }
+
     private final NativeLock mNativeLock = new NativeLock();
 
     @Override
@@ -456,10 +439,10 @@ public class AWindow implements IVLCVout {
      * Callback called from {@link IVLCVout#sendMouseEvent}.
      *
      * @param nativeHandle handle passed by {@link #registerNative(long)}.
-     * @param action see ACTION_* in {@link android.view.MotionEvent}.
-     * @param button see BUTTON_* in {@link android.view.MotionEvent}.
-     * @param x x coordinate.
-     * @param y y coordinate.
+     * @param action       see ACTION_* in {@link android.view.MotionEvent}.
+     * @param button       see BUTTON_* in {@link android.view.MotionEvent}.
+     * @param x            x coordinate.
+     * @param y            y coordinate.
      */
     @SuppressWarnings("JniMissingFunction")
     private static native void nativeOnMouseEvent(long nativeHandle, int action, int button, int x, int y);
@@ -468,8 +451,8 @@ public class AWindow implements IVLCVout {
      * Callback called from {@link IVLCVout#setWindowSize}.
      *
      * @param nativeHandle handle passed by {@link #registerNative(long)}.
-     * @param width width of the window.
-     * @param height height of the window.
+     * @param width        width of the window.
+     * @param height       height of the window.
      */
     @SuppressWarnings("JniMissingFunction")
     private static native void nativeOnWindowSize(long nativeHandle, int width, int height);
@@ -539,9 +522,9 @@ public class AWindow implements IVLCVout {
      * It is synchronous.
      *
      * @param surface surface returned by getVideoSurface or getSubtitlesSurface
-     * @param width surface width
-     * @param height surface height
-     * @param format color format (or PixelFormat)
+     * @param width   surface width
+     * @param height  surface height
+     * @param format  color format (or PixelFormat)
      * @return true if buffersGeometry were set (only before ICS)
      */
     @SuppressWarnings("unused") /* used by JNI */
@@ -604,12 +587,12 @@ public class AWindow implements IVLCVout {
      * This call will result of{@link IVLCVout.OnNewVideoLayoutListener#onNewVideoLayout(IVLCVout, int, int, int, int, int, int)}
      * being called from the main thread.
      *
-     * @param width Frame width
-     * @param height Frame height
-     * @param visibleWidth Visible frame width
+     * @param width         Frame width
+     * @param height        Frame height
+     * @param visibleWidth  Visible frame width
      * @param visibleHeight Visible frame height
-     * @param sarNum Surface aspect ratio numerator
-     * @param sarDen Surface aspect ratio denominator
+     * @param sarNum        Surface aspect ratio numerator
+     * @param sarDen        Surface aspect ratio denominator
      */
     @SuppressWarnings("unused") /* used by JNI */
     private void setVideoLayout(final int width, final int height, final int visibleWidth,

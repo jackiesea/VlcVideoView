@@ -93,10 +93,16 @@ public class Playlist extends MediaLibraryItem {
     }
 
     private native MediaWrapper[] nativeGetTracksFromPlaylist(Medialibrary ml, long id);
+
     private native boolean nativePlaylistAppend(Medialibrary ml, long id, long mediaId);
+
     private native boolean nativePlaylistAppendGroup(Medialibrary ml, long id, long[] mediaIds);
+
     private native boolean nativePlaylistAdd(Medialibrary ml, long id, long mediaId, int position);
+
     private native boolean nativePlaylistMove(Medialibrary ml, long id, long mediaId, int position);
+
     private native boolean nativePlaylistRemove(Medialibrary ml, long id, long mediaId);
+
     private native boolean nativePlaylistDelete(Medialibrary ml, long id);
 }

@@ -1,8 +1,5 @@
 package org.videolan.vlc.listener;
 
-/**
- * Created by yyl on 2016/2/16/016.
- */
 public interface MediaPlayerControl {
 
     boolean isPrepare();
@@ -22,6 +19,8 @@ public interface MediaPlayerControl {
     long getDuration();
 
     long getCurrentPosition();
+
+    int getPlayState();
 
     void seekTo(long pos);
 

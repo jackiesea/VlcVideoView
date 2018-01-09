@@ -7,7 +7,6 @@ import android.content.res.Configuration;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -29,6 +28,7 @@ import org.videolan.vlc.listener.MediaListenerEvent;
 import org.videolan.vlc.util.CoreUtil;
 import org.videolan.vlc.util.DensityUtil;
 import org.videolan.vlc.util.EnumConfig;
+import org.videolan.vlc.util.L;
 import org.videolan.vlc.util.SpUtils;
 import org.videolan.vlc.util.VLCInstance;
 
@@ -45,7 +45,6 @@ import io.reactivex.schedulers.Schedulers;
 
 import static org.videolan.vlc.util.SpConfig.PREFIX_VIDEO_PLAY_POSITION;
 
-/*@author：Mr.CSH*/
 public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarChangeListener, GestureDetector.OnGestureListener, View.OnClickListener {
 
     //控件，因为不是activity，无法正常使用ButterKnife
@@ -96,7 +95,6 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
 
     //其他
     private Context mContext;
-    private int mPlayState = -1;
     private VideoPlayCallbackImpl mVideoPlayCallback;
     private String mCurPlayVideoAccount = "";
     private String mCurPlayVideoId = "";
@@ -105,8 +103,6 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
     private Runnable mVideoReconnect;
     private boolean mIsVideoReconnecting = false;
     private int mReadFrameToutReqDelayMills = 1000;
-    private String mVideoPath = "";
-    private long mLastPosition = 0;
 
     private float mCurSpeed = 1.00f;
     private BigDecimal mSpeedRate = new BigDecimal(Float.toString(0.05f));
@@ -150,13 +146,13 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
         mVideoGestureLayout.getBackground().setAlpha(110);
         mErrorText.getBackground().setAlpha(110);
 
+        mVideoView.setPlayStateCallback(mPlayStateCallback);
         mVideoView.setMediaListenerEvent(mMediaListenerEvent);
         mRootLayout.setOnTouchListener(mOnTouchVideoListener);
         mRootLayout.setLongClickable(true);  //手势需要
 
         mVideoSeekBar.setOnSeekBarChangeListener(this);
 
-        setPlayState(EnumConfig.PlayState.PAUSE);
         setPageType(EnumConfig.PageType.SHRINK);
 
         //视频播放器手势
@@ -221,7 +217,6 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
         mIsCompleted = false;
 
         mVideoTitleText.setText(title);
-        mVideoPath = url;
 
         String scheme = Uri.parse(url).getScheme();
         mIsStreaming = (("http".equalsIgnoreCase(scheme) || "rtsp".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme)));
@@ -234,7 +229,6 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
 
         long seekTime = getVideoPlayPosition(userAccount, curPlayVideoId);
         mVideoView.startPlay(url, seekTime, mCurSpeed);
-        setPlayState(EnumConfig.PlayState.PLAY);
         updateVideoProgress();
     }
 
@@ -555,30 +549,12 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
         onProgressTurn(EnumConfig.ProgressState.STOP, 0);
     }
 
-    public void setPlayState(int playState) {
-        mPlayState = playState;
-        mVideoStateImg.setImageResource((playState == EnumConfig.PlayState.PLAY) ? R.drawable.biz_video_pause : R.drawable.biz_video_play);
-
-        //设置屏幕常亮与否
-        if ((playState == EnumConfig.PlayState.PLAY) && !CoreUtil.isKeepScreenOn(mContext)) {
-            CoreUtil.keepScreenOnOff(mContext, true);
-        } else if (!(playState == EnumConfig.PlayState.PLAY) && CoreUtil.isKeepScreenOn(mContext)) {
-            CoreUtil.keepScreenOnOff(mContext, false);
-        }
-    }
-
     public void onPlayTurn() {
         if (mVideoView.isPlaying()) {
             mVideoView.pause();
-            setPlayState(EnumConfig.PlayState.STOP);
         } else {
             if (CoreUtil.isNetworkAvailable(mContext) || !mIsStreaming) {
-                if (mPlayState == EnumConfig.PlayState.STOP) {
-                    mVideoView.start();
-                    setPlayState(EnumConfig.PlayState.PLAY);
-                } else {
-                    goOnPlay();
-                }
+                mVideoView.start();
             } else {
                 Toast.makeText(mContext, R.string.no_network, Toast.LENGTH_SHORT).show();
             }
@@ -655,32 +631,21 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
         return mCurPlayVideoId;
     }
 
-    public void onActivityResume() {
-        if (mVideoView != null && mLastPosition != 0 && /*mPlayState != PlayState.STOP*/mIsPlayingBeforePause) {
-            mVideoView.startPlay(mVideoPath, mLastPosition, mCurSpeed);
-            setPlayState(EnumConfig.PlayState.PLAY);
+    public void start() {
+        if (mVideoView != null && mIsPlayingBeforePause) {
+            mVideoView.start();
         }
     }
 
-    public void onActivityPause() {
+    public void pause() {
         mIsPlayingBeforePause = mVideoView.isPlaying();
-
-        if (mVideoView != null /*&& mPlayState != PlayState.PAUSE && mPlayState != PlayState.STOP*/) {
-            if (mIsPlayingBeforePause) {    //暂停前处于播放状态
-                setPlayState(EnumConfig.PlayState.PAUSE);
-                mVideoView.onStop();
-            } else {    //暂停前不处于播放状态
-                if (mPlayState == EnumConfig.PlayState.STOP) { //并且点击暂停按钮
-                    setPlayState(EnumConfig.PlayState.PAUSE);  //改变状态，但不onStop释放，否则会从0开始
-                }
-            }
+        if (mVideoView != null) {
+            mVideoView.pause();
         }
-        mLastPosition = mVideoView.getCurrentPosition();
     }
 
-    public void onActivityDestroy() {
+    public void stop() {
         saveVideoPlayPosition();
-//        mVideoView.onDestory();
         mVideoView.onStop();
         CoreUtil.disposeSubscribe(mUpdateVideoTimeDis, mControllerDis);
     }
@@ -745,16 +710,6 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
         }
     }
 
-    public void setVideoPause() {
-        mVideoView.pause();
-        setPlayState(EnumConfig.PlayState.STOP);
-    }
-
-    public void goOnPlay() {
-        mVideoView.startPlay(mVideoPath, mLastPosition, mCurSpeed);
-        setPlayState(EnumConfig.PlayState.PLAY);
-    }
-
     public void onVideoWindowTurn() {
         int orientation = ((Activity) mContext).getRequestedOrientation();
         if (orientation == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE || orientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
@@ -784,8 +739,31 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
     }
 
     public int getPlayState() {
-        return mPlayState;
+        return mVideoView.getPlayState();
     }
+
+    VlcVideoView.PlayStateImpl mPlayStateCallback = new VlcVideoView.PlayStateImpl() {
+        @Override
+        public void setPlayState(int playState) {
+            L.e("playState " + playState);
+            switch (playState) {
+                case EnumConfig.PlayState.STATE_LOAD:
+                case EnumConfig.PlayState.STATE_PLAY:
+                    mVideoStateImg.setImageResource(R.drawable.biz_video_pause);
+                    break;
+                default:
+                    mVideoStateImg.setImageResource(R.drawable.biz_video_play);
+                    break;
+            }
+
+            //设置屏幕常亮与否
+            if ((playState == EnumConfig.PlayState.STATE_PLAY) && !CoreUtil.isKeepScreenOn(mContext)) {
+                CoreUtil.keepScreenOnOff(mContext, true);
+            } else if (!(playState == EnumConfig.PlayState.STATE_PLAY) && CoreUtil.isKeepScreenOn(mContext)) {
+                CoreUtil.keepScreenOnOff(mContext, false);
+            }
+        }
+    };
 
     MediaListenerEvent mMediaListenerEvent = new MediaListenerEvent() {
         @Override
@@ -820,19 +798,19 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
 
         @Override
         public void eventError(int error, boolean show) {
-            Log.d("", "Error happened, errorCode = " + error);
+            L.d("Error happened, errorCode = " + error);
             if (mBufferingLayout != null) {
                 mBufferingLayout.setVisibility(GONE);
             }
 
             if (!mIsCompleted && mVideoView != null) {
-                if (mPlayState == EnumConfig.PlayState.PLAY) {
-                    setVideoPause();
+                if (mVideoView.getPlayState() == EnumConfig.PlayState.STATE_PLAY) {
+                    mVideoView.pause();
                     mVideoView.removeCallbacks(mVideoReconnect);
                     mVideoReconnect = new Runnable() {
                         @Override
                         public void run() {
-                            goOnPlay();
+                            mVideoView.start();
                         }
                     };
                     if (!mIsVideoReconnecting) {
@@ -865,8 +843,6 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
             removeVideoPlayPosition();
 
             mVideoPlayCallback.onPlayComplete();
-
-            setPlayState(EnumConfig.PlayState.PAUSE);
         }
 
         @Override
@@ -876,7 +852,7 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
     };
 
     public long getCurPlayingTime() {
-        return /*mVideoView.getCurrentPosition()*/mCurPlayTime;
+        return mCurPlayTime;
     }
 
     public boolean isCurPlayCompleted() {

@@ -1,8 +1,5 @@
 package org.videolan.vlc.listener;
 
-/**
- * Created by yyl on 2016/3/25/025.
- */
 public interface MediaListenerEvent {
 
     int EVENT_ERROR = 0;

@@ -1,23 +1,3 @@
-/*****************************************************************************
- * VLCOptions.java
- *****************************************************************************
- * Copyright © 2015 VLC authors and VideoLAN
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
- *****************************************************************************/
-
 package org.videolan.vlc.util;
 
 import android.content.Context;
@@ -29,15 +9,12 @@ import android.util.Log;
 
 import org.videolan.libvlc.Media;
 import org.videolan.libvlc.MediaPlayer;
-import org.videolan.libvlc.util.AndroidUtil;
 import org.videolan.libvlc.util.HWDecoderUtil;
 import org.videolan.libvlc.util.VLCUtil;
 
-import java.io.File;
 import java.util.ArrayList;
 
 import static android.os.Build.VERSION_CODES.KITKAT;
-
 
 public class VLCOptions {
     private static final String TAG = "VLCConfig";
@@ -56,16 +33,16 @@ public class VLCOptions {
 
         ArrayList<String> options = new ArrayList<String>(50);
 
-       // final boolean timeStrechingDefault = context.getResources().getBoolean(R.bool.time_stretching_default);
-        boolean timeStrechingDefault= Build.VERSION.SDK_INT >= KITKAT;
+        // final boolean timeStrechingDefault = context.getResources().getBoolean(R.bool.time_stretching_default);
+        boolean timeStrechingDefault = Build.VERSION.SDK_INT >= KITKAT;
 
         final boolean timeStreching = pref.getBoolean("enable_time_stretching_audio", /*timeStrechingDefault*/true);
         final String subtitlesEncoding = pref.getString("subtitle_text_encoding", "");
         final boolean frameSkip = pref.getBoolean("enable_frame_skip", false);
 
         //  <item>RV32</item>
-      //  <item>RV16</item>
-      //  <item>YV12</item>//chroma 的色彩
+        //  <item>RV16</item>
+        //  <item>YV12</item>//chroma 的色彩
 
         String chroma = pref.getString("chroma_format", "RV16");
         if (chroma.equals("YV12"))
@@ -75,7 +52,8 @@ public class VLCOptions {
         int deblocking = -1;
         try {
             deblocking = getDeblocking(Integer.parseInt(pref.getString("deblocking", "-1")));
-        } catch (NumberFormatException ignored) {}
+        } catch (NumberFormatException ignored) {
+        }
 
         int networkCaching = pref.getInt("network_caching_value", 0);
         if (networkCaching > 1000)
@@ -114,9 +92,9 @@ public class VLCOptions {
 //        else
 //            options.add("--freetype-background-opacity=0");
 //        if (opengl == 1)
-     //       options.add("--vout=gles2,none");
+        //       options.add("--vout=gles2,none");
 //        else if (opengl == 0)
-            options.add("--vout=android_display,none");
+        options.add("--vout=android_display,none");
 
         /* Configure keystore */
 //        options.add("--keystore");
@@ -136,7 +114,8 @@ public class VLCOptions {
         int aout = -1;
         try {
             aout = Integer.parseInt(pref.getString("aout", "-1"));
-        } catch (NumberFormatException ignored) {}
+        } catch (NumberFormatException ignored) {
+        }
         final HWDecoderUtil.AudioOutput hwaout = HWDecoderUtil.getAudioOutputFromDevice();
         if (hwaout == HWDecoderUtil.AudioOutput.AUDIOTRACK || hwaout == HWDecoderUtil.AudioOutput.OPENSLES)
             aout = hwaout == HWDecoderUtil.AudioOutput.OPENSLES ? AOUT_OPENSLES : AOUT_AUDIOTRACK;
@@ -176,10 +155,12 @@ public class VLCOptions {
         final VLCUtil.MachineSpecs m = VLCUtil.getMachineSpecs();
         return (m == null || m.processors > 2) ? "soxr" : "ugly";
     }
+
     public final static int MEDIA_VIDEO = 0x01;
     public final static int MEDIA_NO_HWACCEL = 0x02;
     public final static int MEDIA_PAUSED = 0x4;
     public final static int MEDIA_FORCE_AUDIO = 0x8;
+
     public static void setMediaOptions(Media media, Context context, int flags) {
         boolean noHardwareAcceleration = (flags & MEDIA_NO_HWACCEL) != 0;
         boolean noVideo = (flags & MEDIA_VIDEO) == 0;
@@ -190,7 +171,8 @@ public class VLCOptions {
             try {
                 final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
                 hardwareAcceleration = Integer.parseInt(pref.getString("hardware_acceleration", "-1"));
-            } catch (NumberFormatException ignored) {}
+            } catch (NumberFormatException ignored) {
+            }
         }
         if (hardwareAcceleration == HW_ACCELERATION_DISABLED)
             media.setHWDecoderEnabled(false, false);

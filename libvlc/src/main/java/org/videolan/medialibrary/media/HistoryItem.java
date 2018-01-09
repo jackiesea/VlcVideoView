@@ -1,6 +1,5 @@
 package org.videolan.medialibrary.media;
 
-
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -12,7 +11,7 @@ public class HistoryItem extends MediaLibraryItem {
     private boolean favorite;
     private long insertionDate;
 
-    public HistoryItem (String mrl, String title, long insertionDate, boolean favorite) {
+    public HistoryItem(String mrl, String title, long insertionDate, boolean favorite) {
         this.mrl = mrl;
         this.title = title;
         this.favorite = favorite;
@@ -25,6 +24,7 @@ public class HistoryItem extends MediaLibraryItem {
         mw.setType(MediaWrapper.TYPE_STREAM);
         return mw;
     }
+
     @Override
     public MediaWrapper[] getTracks() {
         return new MediaWrapper[]{getMedia()};

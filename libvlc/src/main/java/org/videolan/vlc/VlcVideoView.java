@@ -1,26 +1,21 @@
 package org.videolan.vlc;
 
-
 import android.content.Context;
 import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.util.AttributeSet;
 import android.view.TextureView;
 
-
 import org.videolan.libvlc.LibVLC;
 import org.videolan.libvlc.Media;
 import org.videolan.vlc.listener.MediaListenerEvent;
 import org.videolan.vlc.listener.MediaPlayerControl;
 import org.videolan.vlc.listener.VideoSizeChange;
-import org.videolan.vlc.util.LogUtils;
-
-/**
- * Created by yyl on 2017/11/02
- */
+import org.videolan.vlc.util.L;
 
 public class VlcVideoView extends TextureView implements MediaPlayerControl, TextureView.SurfaceTextureListener, VideoSizeChange {
     private VlcPlayer videoMediaLogic;
+    private PlayStateImpl mPlayStateCallback;
     private final String tag = "VideoView";
 
     public VlcVideoView(Context context) {
@@ -48,18 +43,25 @@ public class VlcVideoView extends TextureView implements MediaPlayerControl, Tex
         return videoMediaLogic.canControl();
     }
 
+    /**
+     * 关闭avtivity时 停止时用
+     */
     public void onStop() {
         videoMediaLogic.onStop();
     }
 
+    /**
+     * 退出应用时回收
+     */
     public void onDestory() {
         if (videoMediaLogic != null)
             videoMediaLogic.onDestory();
-        LogUtils.i(tag, "onDestory");
+        L.i(tag, "onDestory");
     }
 
     private void init(Context context) {
         videoMediaLogic = new VlcPlayer(context);
+        videoMediaLogic.setPlayerStateCallback(mPlayerStateCallback);
         videoMediaLogic.setVideoSizeChange(this);
         setSurfaceTextureListener(this);
     }
@@ -76,7 +78,6 @@ public class VlcVideoView extends TextureView implements MediaPlayerControl, Tex
     public boolean isPrepare() {
         return videoMediaLogic.isPrepare();
     }
-
 
     @Override
     public void startPlay(String path, long seekTime, float speed) {
@@ -108,6 +109,11 @@ public class VlcVideoView extends TextureView implements MediaPlayerControl, Tex
     }
 
     @Override
+    public int getPlayState() {
+        return videoMediaLogic.getPlayState();
+    }
+
+    @Override
     public void seekTo(long pos) {
         videoMediaLogic.seekTo(pos);
     }
@@ -116,7 +122,6 @@ public class VlcVideoView extends TextureView implements MediaPlayerControl, Tex
     public boolean isPlaying() {
         return videoMediaLogic.isPlaying();
     }
-
 
     @Override
     public void setMirror(boolean mirror) {
@@ -165,13 +170,13 @@ public class VlcVideoView extends TextureView implements MediaPlayerControl, Tex
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-        LogUtils.i(tag, "onSurfaceTextureAvailable");
+        L.i(tag, "onSurfaceTextureAvailable");
         videoMediaLogic.setSurface(surface);
     }
 
     @Override
     public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-        LogUtils.i(tag, "onSurfaceTextureSizeChanged");
+        L.i(tag, "onSurfaceTextureSizeChanged");
         post(new Runnable() {
             @Override
             public void run() {
@@ -182,7 +187,7 @@ public class VlcVideoView extends TextureView implements MediaPlayerControl, Tex
 
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-        LogUtils.i(tag, "onSurfaceTextureDestroyed");
+        L.i(tag, "onSurfaceTextureDestroyed");
         videoMediaLogic.onSurfaceTextureDestroyed();
         return false;
     }
@@ -196,7 +201,7 @@ public class VlcVideoView extends TextureView implements MediaPlayerControl, Tex
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        LogUtils.i(tag, "onAttachedToWindow");
+        L.i(tag, "onAttachedToWindow");
         if (isInEditMode()) {
             return;
         }
@@ -206,7 +211,7 @@ public class VlcVideoView extends TextureView implements MediaPlayerControl, Tex
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        LogUtils.i(tag, "onDetachedFromWindow");
+        L.i(tag, "onDetachedFromWindow");
         if (isInEditMode()) {
             return;
         }
@@ -244,9 +249,6 @@ public class VlcVideoView extends TextureView implements MediaPlayerControl, Tex
         // txform.postRotate(10); // just for fun
         txform.postTranslate(xoff, yoff);
         setTransform(txform);
-        LogUtils.i(tag, "video=" + videoWidth + "x" + videoHeight + " view="
-                + viewWidth + "x" + viewHeight + " newView=" + newWidth + "x"
-                + newHeight + " off=" + xoff + "," + yoff + "   isRotation=" + rotation);
         if (rotation == 180) {
             setRotation(180);
         } else {
@@ -262,21 +264,43 @@ public class VlcVideoView extends TextureView implements MediaPlayerControl, Tex
         }
     }
 
-    private int mVideoWidth, mVideoHeight, rotation = 0;
+    private int mVideoWidth;
+    private int mVideoHeight;
+
+    public int getVideoRotation() {
+        return rotation;
+    }
+
+    private int rotation = 0;
 
     @Override
-    public void onVideoSizeChanged(int width, int height, int visibleWidth, int visibleHeight, int sarNum, int sarDen) {
-        LogUtils.i(tag, "onVideoSizeChanged   video=" + width + "x" + width + " visible="
-                + visibleWidth + "x" + visibleHeight + "   sarNum=" + sarNum + "x"
-                + sarDen);
+    public void onVideoSizeChanged(int width, int height, int visibleWidth, int visibleHeight, int orientation) {
+        L.i(tag, "onVideoSizeChanged   video=" + width + "x" + width + " visible="
+                + visibleWidth + "x" + visibleHeight + "   orientation=" + orientation);
         if (width * height == 0) return;
         this.mVideoWidth = visibleWidth;
         this.mVideoHeight = visibleHeight;
+        this.rotation = orientation;
         post(new Runnable() {
             @Override
             public void run() {
                 adjustAspectRatio(mVideoWidth, mVideoHeight, rotation);
             }
         });
+    }
+
+    VlcPlayer.PlayerStateImpl mPlayerStateCallback = new VlcPlayer.PlayerStateImpl() {
+        @Override
+        public void setPlayerState(int playerState) {
+            mPlayStateCallback.setPlayState(playerState);
+        }
+    };
+
+    public void setPlayStateCallback(PlayStateImpl playStateCallback) {
+        mPlayStateCallback = playStateCallback;
+    }
+
+    public interface PlayStateImpl {
+        void setPlayState(int playState);
     }
 }

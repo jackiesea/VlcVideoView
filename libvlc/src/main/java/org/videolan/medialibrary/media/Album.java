@@ -8,7 +8,11 @@ import org.videolan.libvlc.util.VLCUtil;
 import org.videolan.medialibrary.Medialibrary;
 
 public class Album extends MediaLibraryItem {
-    private static String UNKNOWN_ALBUM;
+    public static final String TAG = "VLC/Album";
+
+    static class SpecialRes {
+        static String UNKNOWN_ALBUM = "unknown_album";
+    }
 
     private int releaseYear;
     private String artworkMrl;
@@ -21,21 +25,15 @@ public class Album extends MediaLibraryItem {
         super(id, title);
         this.releaseYear = releaseYear;
         this.artworkMrl = artworkMrl != null ? VLCUtil.UriFromMrl(artworkMrl).getPath() : null;
-        this.albumArtist = albumArtist != null ? albumArtist.trim(): null;
+        this.albumArtist = albumArtist != null ? albumArtist.trim() : null;
         this.albumArtistId = albumArtistId;
         this.mTracksCount = nbTracks;
         this.duration = duration;
-        if (TextUtils.isEmpty(title)) {
-            if (UNKNOWN_ALBUM == null)
-                UNKNOWN_ALBUM ="unknown_album";
-                        //Medialibrary.getContext().getString(R.string.unknown_album);
-            mTitle = UNKNOWN_ALBUM;
-        }
-        if (TextUtils.isEmpty(albumArtist)) {
-            if (Artist.UNKNOWN_ARTIST == null)
-                Artist.UNKNOWN_ARTIST ="unknown_artist";
-                        //Medialibrary.getContext().getString(R.string.unknown_artist);
-            this.albumArtist = Artist.UNKNOWN_ARTIST;
+        if (TextUtils.isEmpty(title)) mTitle = SpecialRes.UNKNOWN_ALBUM;
+        if (albumArtistId == 1L) {
+            this.albumArtist = Artist.SpecialRes.UNKNOWN_ARTIST;
+        } else if (albumArtistId == 2L) {
+            this.albumArtist = Artist.SpecialRes.VARIOUS_ARTISTS;
         }
     }
 

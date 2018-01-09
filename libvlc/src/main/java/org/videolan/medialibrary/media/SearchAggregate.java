@@ -15,7 +15,8 @@ public class SearchAggregate {
         this.artists = null;
         this.genres = null;
         this.mediaSearchAggregate = null;
-        this.playlists = null;}
+        this.playlists = null;
+    }
 
     public SearchAggregate(Album[] albums, Artist[] artists, Genre[] genres, MediaSearchAggregate mediaSearchAggregate, Playlist[] playlists) {
         this.albums = albums;

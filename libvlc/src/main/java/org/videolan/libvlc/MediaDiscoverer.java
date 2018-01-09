@@ -1,23 +1,3 @@
-/*****************************************************************************
- * MediaDiscoverer.java
- *****************************************************************************
- * Copyright © 2015 VLC authors, VideoLAN and VideoLabs
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
- *****************************************************************************/
-
 package org.videolan.libvlc;
 
 import android.support.annotation.Nullable;
@@ -29,7 +9,7 @@ public class MediaDiscoverer extends VLCObject<MediaDiscoverer.Event> {
     public static class Event extends VLCEvent {
 
         public static final int Started = 0x500;
-        public static final int Ended   = 0x501;
+        public static final int Ended = 0x501;
 
         protected Event(int type) {
             super(type);
@@ -38,21 +18,29 @@ public class MediaDiscoverer extends VLCObject<MediaDiscoverer.Event> {
 
     public static class Description {
         public static class Category {
-            /** devices, like portable music player */
+            /**
+             * devices, like portable music player
+             */
             public static final int Devices = 0;
-            /** LAN/WAN services, like Upnp, SMB, or SAP */
+            /**
+             * LAN/WAN services, like Upnp, SMB, or SAP
+             */
             public static final int Lan = 1;
-            /** Podcasts */
+            /**
+             * Podcasts
+             */
             public static final int Podcasts = 2;
-            /** Local directories, like Video, Music or Pictures directories */
+            /**
+             * Local directories, like Video, Music or Pictures directories
+             */
             public static final int LocalDirs = 3;
         }
+
         public final String name;
         public final String longName;
         public final int category;
 
-        private Description(String name, String longName, int category)
-        {
+        private Description(String name, String longName, int category) {
             this.name = name;
             this.longName = longName;
             this.category = category;
@@ -60,12 +48,12 @@ public class MediaDiscoverer extends VLCObject<MediaDiscoverer.Event> {
     }
 
     @SuppressWarnings("unused") /* Used from JNI */
-    private static Description createDescriptionFromNative(String name, String longName, int category)
-    {
+    private static Description createDescriptionFromNative(String name, String longName, int category) {
         return new Description(name, longName, category);
     }
 
-    public interface EventListener extends VLCEvent.Listener<MediaDiscoverer.Event> {}
+    public interface EventListener extends VLCEvent.Listener<MediaDiscoverer.Event> {
+    }
 
     private MediaList mMediaList = null;
 
@@ -73,7 +61,7 @@ public class MediaDiscoverer extends VLCObject<MediaDiscoverer.Event> {
      * Create a MediaDiscover.
      *
      * @param libVLC a valid LibVLC
-     * @param name Name of the vlc service discovery ("dsm", "upnp", "bonjour"...).
+     * @param name   Name of the vlc service discovery ("dsm", "upnp", "bonjour"...).
      */
     public MediaDiscoverer(LibVLC libVLC, String name) {
         super(libVLC);
@@ -145,6 +133,7 @@ public class MediaDiscoverer extends VLCObject<MediaDiscoverer.Event> {
 
     /**
      * Get media discoverers by category
+     *
      * @param category see {@link Description.Category}
      */
     @Nullable
@@ -154,8 +143,12 @@ public class MediaDiscoverer extends VLCObject<MediaDiscoverer.Event> {
 
     /* JNI */
     private native void nativeNew(LibVLC libVLC, String name);
+
     private native void nativeRelease();
+
     private native boolean nativeStart();
+
     private native void nativeStop();
+
     private static native Description[] nativeList(LibVLC libVLC, int category);
 }

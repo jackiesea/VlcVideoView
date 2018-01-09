@@ -4,24 +4,22 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.text.TextUtils;
 
-import org.videolan.medialibrary.Medialibrary;
-
 public abstract class MediaLibraryItem implements Parcelable {
 
-    public static final int TYPE_ALBUM    = 1 << 1;
-    public static final int TYPE_ARTIST   = 1 << 2;
-    public static final int TYPE_GENRE    = 1 << 3;
+    public static final int TYPE_ALBUM = 1 << 1;
+    public static final int TYPE_ARTIST = 1 << 2;
+    public static final int TYPE_GENRE = 1 << 3;
     public static final int TYPE_PLAYLIST = 1 << 4;
-    public static final int TYPE_MEDIA    = 1 << 5;
-    public static final int TYPE_DUMMY    = 1 << 6;
-    public static final int TYPE_STORAGE  = 1 << 7;
-    public static final int TYPE_HISTORY  = 1 << 9;
+    public static final int TYPE_MEDIA = 1 << 5;
+    public static final int TYPE_DUMMY = 1 << 6;
+    public static final int TYPE_STORAGE = 1 << 7;
+    public static final int TYPE_HISTORY = 1 << 9;
 
     public static final int FLAG_NONE = 0;
     public static final int FLAG_SELECTED = 1;
 
-
     public abstract MediaWrapper[] getTracks();
+
     public abstract int getItemType();
 
     long mId;
@@ -29,7 +27,8 @@ public abstract class MediaLibraryItem implements Parcelable {
     String mDescription;
     private int mFlags;
 
-    protected MediaLibraryItem() {}
+    protected MediaLibraryItem() {
+    }
 
     protected MediaLibraryItem(long id, String name) {
         mId = id;
@@ -117,7 +116,7 @@ public abstract class MediaLibraryItem implements Parcelable {
         if (getItemType() == TYPE_DUMMY)
             return TextUtils.equals(getTitle(), other.getTitle());
         if (getItemType() == TYPE_MEDIA)
-            return TextUtils.equals(((MediaWrapper)this).getLocation(), ((MediaWrapper)other).getLocation());
+            return TextUtils.equals(((MediaWrapper) this).getLocation(), ((MediaWrapper) other).getLocation());
         return false;
     }
 }

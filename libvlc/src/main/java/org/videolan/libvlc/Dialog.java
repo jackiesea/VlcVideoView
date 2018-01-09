@@ -1,23 +1,3 @@
-/*****************************************************************************
- * Dialog.java
- *****************************************************************************
- * Copyright © 2016 VLC authors, VideoLAN and VideoLabs
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
- *****************************************************************************/
-
 package org.videolan.libvlc;
 
 import android.os.Handler;
@@ -41,7 +21,7 @@ public abstract class Dialog {
 
         /**
          * Called when a login dialog need to be displayed
-         *
+         * <p>
          * Call {@link LoginDialog#postLogin(String, String, boolean)} to post the answer, or
          * call {@link LoginDialog#dismiss()} to dismiss the dialog.
          *
@@ -52,7 +32,7 @@ public abstract class Dialog {
 
         /**
          * Called when a question dialog need to be displayed
-         *
+         * <p>
          * Call {@link QuestionDialog#postAction(int)} to post the answer, or
          * call {@link QuestionDialog#dismiss()} to dismiss the dialog.
          *
@@ -63,7 +43,7 @@ public abstract class Dialog {
 
         /**
          * Called when a progress dialog need to be displayed
-         *
+         * <p>
          * Call {@link ProgressDialog#dismiss()} to dismiss the dialog (if it's cancelable).
          *
          * @param dialog question dialog to be displayed
@@ -81,7 +61,7 @@ public abstract class Dialog {
 
         /**
          * Called when a progress dialog needs to be updated
-         *
+         * <p>
          * Dialog text and position may be updated, call {@link ProgressDialog#getText()} and
          * {@link ProgressDialog#getPosition()} to get the updated information.
          *
@@ -112,9 +92,10 @@ public abstract class Dialog {
 
     /**
      * Get the type of the dialog
-     *
+     * <p>
      * See {@link Dialog#TYPE_ERROR}, {@link Dialog#TYPE_LOGIN}, {@link Dialog#TYPE_QUESTION} and
      * {@link Dialog#TYPE_PROGRESS}
+     *
      * @return
      */
     @MainThread
@@ -164,7 +145,7 @@ public abstract class Dialog {
     /**
      * Register callbacks in order to handle VLC dialogs
      *
-     * @param libVLC valid LibVLC object
+     * @param libVLC    valid LibVLC object
      * @param callbacks dialog callbacks or null to unregister
      */
     @MainThread
@@ -177,7 +158,7 @@ public abstract class Dialog {
 
     /**
      * Error message
-     *
+     * <p>
      * Used to signal an error message to the user
      */
     public static class ErrorMessage extends Dialog {
@@ -202,12 +183,13 @@ public abstract class Dialog {
                 mId = 0;
             }
         }
+
         private native void nativeDismiss(long id);
     }
 
     /**
      * Login Dialog
-     *
+     * <p>
      * Used to ask credentials to the user
      */
     public static class LoginDialog extends IdDialog {
@@ -243,7 +225,7 @@ public abstract class Dialog {
          *
          * @param username valid username (can't be empty)
          * @param password valid password (can be empty)
-         * @param store if true, store the credentials
+         * @param store    if true, store the credentials
          */
         @MainThread
         public void postLogin(String username, String password, boolean store) {
@@ -258,7 +240,7 @@ public abstract class Dialog {
 
     /**
      * Question dialog
-     *
+     * <p>
      * Used to ask a blocking question
      */
     public static class QuestionDialog extends IdDialog {
@@ -282,7 +264,7 @@ public abstract class Dialog {
 
         /**
          * Get the type (or severity) of the question dialog
-         *
+         * <p>
          * See {@link QuestionDialog#TYPE_NORMAL}, {@link QuestionDialog#TYPE_WARNING} and
          * {@link QuestionDialog#TYPE_ERROR}
          */
@@ -327,12 +309,13 @@ public abstract class Dialog {
                 mId = 0;
             }
         }
+
         private native void nativePostAction(long id, int action);
     }
 
     /**
      * Progress Dialog
-     *
+     * <p>
      * Used to display a progress dialog
      */
     public static class ProgressDialog extends IdDialog {
@@ -366,6 +349,7 @@ public abstract class Dialog {
 
         /**
          * Get the position of the progress dialog
+         *
          * @return position between 0.0 and 1.0
          */
         @MainThread

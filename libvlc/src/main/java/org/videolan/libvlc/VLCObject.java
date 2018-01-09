@@ -1,23 +1,3 @@
-/*****************************************************************************
- * VLCObject.java
- *****************************************************************************
- * Copyright © 2015 VLC authors, VideoLAN and VideoLabs
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
- *****************************************************************************/
-
 package org.videolan.libvlc;
 
 import android.os.Handler;
@@ -53,6 +33,7 @@ abstract class VLCObject<T extends VLCEvent> {
 
     /**
      * Increment internal ref count of the native object.
+     *
      * @return true if media is retained
      */
     public synchronized final boolean retain() {
@@ -65,7 +46,7 @@ abstract class VLCObject<T extends VLCEvent> {
 
     /**
      * Release the native object if ref count is 1.
-     *
+     * <p>
      * After this call, native calls are not possible anymore.
      * You can still call others methods to retrieve cached values.
      * For example: if you parse, then release a media, you'll still be able to retrieve all Metas or Tracks infos.
@@ -103,8 +84,9 @@ abstract class VLCObject<T extends VLCEvent> {
 
     /**
      * Set an event listener and an executor Handler
+     *
      * @param listener see {@link VLCEvent.Listener}
-     * @param handler Handler in which events are sent. If null, a handler will be created running on the main thread
+     * @param handler  Handler in which events are sent. If null, a handler will be created running on the main thread
      */
     protected synchronized void setEventListener(VLCEvent.Listener<T> listener, Handler handler) {
         if (mHandler != null)
@@ -120,16 +102,16 @@ abstract class VLCObject<T extends VLCEvent> {
      * Called when libvlc send events.
      *
      * @param eventType event type
-     * @param arg1 first argument
-     * @param arg2 second argument
-     * @param argf1 first float argument
+     * @param arg1      first argument
+     * @param arg2      second argument
+     * @param argf1     first float argument
      * @return Event that will be dispatched to listeners
      */
     protected abstract T onEventNative(int eventType, long arg1, long arg2, float argf1);
 
     /**
      * Called when native object is released (refcount is 0).
-     *
+     * <p>
      * This is where you must release native resources.
      */
     protected abstract void onReleaseNative();
@@ -137,6 +119,7 @@ abstract class VLCObject<T extends VLCEvent> {
     /* JNI */
     @SuppressWarnings("unused") /* Used from JNI */
     private long mInstance = 0;
+
     private synchronized void dispatchEventFromNative(int eventType, long arg1, long arg2, float argf1) {
         if (isReleased())
             return;
@@ -150,6 +133,7 @@ abstract class VLCObject<T extends VLCEvent> {
                 this.listener = listener;
                 this.event = event;
             }
+
             @Override
             public void run() {
                 listener.onEvent(event);
@@ -160,6 +144,7 @@ abstract class VLCObject<T extends VLCEvent> {
         if (event != null && mEventListener != null && mHandler != null)
             mHandler.post(new EventRunnable(mEventListener, event));
     }
+
     private native void nativeDetachEvents();
 
     /* used only before API 7: substitute for NewWeakGlobalRef */
@@ -167,10 +152,11 @@ abstract class VLCObject<T extends VLCEvent> {
     private Object getWeakReference() {
         return new WeakReference<VLCObject>(this);
     }
+
     @SuppressWarnings("unchecked,unused") /* Used from JNI */
     private static void dispatchEventFromWeakNative(Object weak, int eventType, long arg1, long arg2,
                                                     float argf1) {
-        VLCObject obj = ((WeakReference<VLCObject>)weak).get();
+        VLCObject obj = ((WeakReference<VLCObject>) weak).get();
         if (obj != null)
             obj.dispatchEventFromNative(eventType, arg1, arg2, argf1);
     }

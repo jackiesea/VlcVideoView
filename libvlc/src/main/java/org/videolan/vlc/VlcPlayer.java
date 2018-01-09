@@ -1,6 +1,5 @@
 package org.videolan.vlc;
 
-
 import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.net.Uri;
@@ -11,7 +10,6 @@ import android.os.Message;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 
-
 import org.videolan.libvlc.IVLCVout;
 import org.videolan.libvlc.LibVLC;
 import org.videolan.libvlc.Media;
@@ -19,16 +17,19 @@ import org.videolan.libvlc.MediaPlayer;
 import org.videolan.vlc.listener.MediaListenerEvent;
 import org.videolan.vlc.listener.MediaPlayerControl;
 import org.videolan.vlc.listener.VideoSizeChange;
-import org.videolan.vlc.util.LogUtils;
+import org.videolan.vlc.util.L;
 import org.videolan.vlc.util.VLCInstance;
 import org.videolan.vlc.util.VLCOptions;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-/**
- * Created by yyl on 2017/11/02
- */
+import static org.videolan.vlc.util.EnumConfig.PlayState.STATE_LOAD;
+import static org.videolan.vlc.util.EnumConfig.PlayState.STATE_PAUSE;
+import static org.videolan.vlc.util.EnumConfig.PlayState.STATE_PLAY;
+import static org.videolan.vlc.util.EnumConfig.PlayState.STATE_RESUME;
+import static org.videolan.vlc.util.EnumConfig.PlayState.STATE_STOP;
+
 public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout.OnNewVideoLayoutListener, IVLCVout.Callback {
     private final String tag = "VlcPlayer";
     private final Handler theadsHandler;
@@ -39,6 +40,10 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
     private static boolean isSaveState;//跳转界面时 保存实例
     private static final int INIT_START = 0x0008;
     private static final int INIT_STOP = 0x0009;
+
+    private int currentState = STATE_LOAD;
+    private int orientation;
+    private PlayerStateImpl mPlayerStateCallback;
 
     private final Lock lock = new ReentrantLock();
     private static final HandlerThread sThread = new HandlerThread("VlcPlayThread");
@@ -63,7 +68,6 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
     public static void setInstance(boolean isInstance) {
         VlcPlayer.isInstance = isInstance;
     }
-
 
     @Override
     public boolean handleMessage(Message msg) {
@@ -102,7 +106,6 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
     private boolean othereMedia;
     private boolean isLoop = false;
 
-
     public VlcPlayer(Context context) {
         mContext = context;
         theadsHandler = new Handler(sThread.getLooper(), this);
@@ -133,22 +136,33 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
     public void setSurface(SurfaceTexture surface) {
         this.surface = surface;
         isAttached = true;
-        if (isSufaceDelayerPlay) {
+        if (isSufaceDelayerPlay && !isAttachedSurface) {//surface未创建时延迟加载播放
             isSufaceDelayerPlay = false;
             startPlay(path, seekTime, speed);
+        } else if (isInitStart && isInitPlay) {
+            seekTo(getCurrentPosition());//老是黑一下 这buffing没给刷新接口啊 只能手工seek一下了
+            attachSurface();
+            if (currentState == STATE_RESUME || currentState == STATE_PLAY) {
+                start();
+            }
         }
     }
 
     public void onSurfaceTextureDestroyed() {
         isAttached = false;
-        isSufaceDelayerPlay = false;
-        if (isAttachedSurface) {
+        this.surface = null;
+        if (isAttachedSurface && isInitPlay) {
             isAttachedSurface = false;
-            pause();
-            mMediaPlayer.getVLCVout().detachViews();
+            if (isPlaying()) {
+                pause();
+                setPlayState(STATE_RESUME);
+            }
+            if (mMediaPlayer != null) {
+                mMediaPlayer.getVLCVout().detachViews();
+                mMediaPlayer.getVLCVout().removeCallback(this);
+            }
         }
     }
-
 
     @Override
     public void setLoop(boolean isLoop) {
@@ -170,7 +184,6 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
         });
         theadsHandler.obtainMessage(INIT_STOP).sendToTarget();
     }
-
 
     private void opendVideo() {
         if (TextUtils.isEmpty(path) || mContext == null || !isAttached) {
@@ -197,14 +210,7 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
         if (!othereMedia) {
             loadMedia();
         }
-        if (!mMediaPlayer.getVLCVout().areViewsAttached() && isAttached && surface != null) {
-            isAttachedSurface = true;
-            mMediaPlayer.getVLCVout().setVideoSurface(surface);
-            mMediaPlayer.getVLCVout().addCallback(this);
-            mMediaPlayer.getVLCVout().attachViews(this);
-            mMediaPlayer.setVideoTitleDisplay(MediaPlayer.Position.Disable, 0);
-            LogUtils.i(tag, "setVideoSurface   attachViews");
-        }
+        attachSurface();
         mMediaPlayer.setEventListener(new MediaPlayer.EventListener() {
             @Override
             public void onEvent(MediaPlayer.Event event) {
@@ -217,12 +223,24 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
         canSeek = false;
         canPause = false;
         isPlayError = false;
-        LogUtils.i(tag, "isAttached=" + isAttached + " isInitStart=" + isInitStart);
+        orientation = -1;
+        L.i(tag, "isAttached=" + isAttached + " isInitStart=" + isInitStart);
         if (isAttached && isInitStart && isAttachedSurface) {
             mMediaPlayer.play();
         }
         if (seekTime > 0) {
             mMediaPlayer.setTime(seekTime);
+        }
+    }
+
+    private void attachSurface() {
+        if (!mMediaPlayer.getVLCVout().areViewsAttached() && isAttached && surface != null) {
+            isAttachedSurface = true;
+            mMediaPlayer.getVLCVout().setVideoSurface(surface);
+            mMediaPlayer.getVLCVout().addCallback(this);//没添加的才能加进去也省了remove了
+            mMediaPlayer.getVLCVout().attachViews(this);
+            mMediaPlayer.setVideoTitleDisplay(MediaPlayer.Position.Disable, 0);
+            L.i(tag, "setVideoSurface   attachViews");
         }
     }
 
@@ -257,28 +275,25 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
         media.release();
     }
 
-
     private final Media.EventListener mMediaListener = new Media.EventListener() {
         @Override
         public void onEvent(Media.Event event) {
             switch (event.type) {
                 case Media.Event.MetaChanged:
-                    LogUtils.i(tag, "Media.Event.MetaChanged:  =" + event.getMetaId());
+                    L.i(tag, "Media.Event.MetaChanged:  =" + event.getMetaId());
                     break;
                 case Media.Event.ParsedChanged:
-                    LogUtils.i(tag, "Media.Event.ParsedChanged  =" + event.getMetaId());
+                    L.i(tag, "Media.Event.ParsedChanged  =" + event.getMetaId());
                     break;
                 case Media.Event.StateChanged:
-                    LogUtils.i(tag, "StateChanged   =" + event.getMetaId());
+                    L.i(tag, "StateChanged   =" + event.getMetaId());
                     break;
                 default:
-                    LogUtils.i(tag, "Media.Event.type=" + event.type + "   eventgetParsedStatus=" + event.getParsedStatus());
+                    L.i(tag, "Media.Event.type=" + event.type + "   eventgetParsedStatus=" + event.getParsedStatus());
                     break;
-
             }
         }
     };
-
 
     public void saveState() {
         if (isInitPlay) {
@@ -293,6 +308,7 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
         this.seekTime = seekTime;
         this.speed = speed;
         isInitStart = true;
+        setPlayState(STATE_LOAD);
         mainHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -312,7 +328,7 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
         canSeek = false;
         canPause = false;
         if (isAttached && isLoop && isPrepare()) {
-            LogUtils.i(tag, "reStartPlay setMedia");
+            L.i(tag, "reStartPlay setMedia");
             mMediaPlayer.setMedia(mMediaPlayer.getMedia());
             if (isAttached)
                 mMediaPlayer.play();
@@ -327,9 +343,9 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
         }
     }
 
-
     private void release() {
-        LogUtils.i(tag, "release");
+        L.i(tag, "release");
+        setPlayState(STATE_STOP);
         canSeek = false;
         canPause = false;
         if (mMediaPlayer != null && isInitPlay) {
@@ -337,6 +353,7 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
             if (isAttachedSurface) {
                 isAttachedSurface = false;
                 mMediaPlayer.getVLCVout().detachViews();
+                mMediaPlayer.getVLCVout().removeCallback(this);
             }
             if (isSaveState) {
                 mMediaPlayer.pause();
@@ -345,13 +362,13 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
                 if (media != null) {
                     media.setEventListener(null);
                     mMediaPlayer.stop();
-                    LogUtils.i(tag, "release setMedia null");
+                    L.i(tag, "release setMedia null");
                     mMediaPlayer.setMedia(null);
                     media.release();
                     isSaveState = false;
                 }
             }
-            LogUtils.i(tag, "release over");
+            L.i(tag, "release over");
         }
         isInitStart = false;
     }
@@ -370,11 +387,11 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
     private void onEventNative(final MediaPlayer.Event event) {
         switch (event.type) {
             case MediaPlayer.Event.Stopped:
-                LogUtils.i(tag, "Stopped  isLoop=" + isLoop + "  ");
+                L.i(tag, "Stopped  isLoop=" + isLoop + "  ");
                 reStartPlay();
                 break;
             case MediaPlayer.Event.EndReached:
-                LogUtils.i(tag, "EndReached");
+                L.i(tag, "EndReached");
                 mainHandler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -386,7 +403,7 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
             case MediaPlayer.Event.EncounteredError:
                 isPlayError = true;
                 canReadInfo = false;
-                LogUtils.i(tag, "EncounteredError");
+                L.i(tag, "EncounteredError");
                 mainHandler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -396,12 +413,12 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
                 });
                 break;
             case MediaPlayer.Event.Opening:
-                LogUtils.i(tag, "Opening");
+                L.i(tag, "Opening");
                 canReadInfo = true;
                 mMediaPlayer.setRate(speed);
                 break;
             case MediaPlayer.Event.Playing:
-                LogUtils.i(tag, "Playing");
+                L.i(tag, "Playing");
                 canReadInfo = true;
                 mainHandler.post(new Runnable() {
                     @Override
@@ -410,9 +427,8 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
                             mediaListenerEvent.eventPlay(true);
                     }
                 });
-                if (!isAttached || !mMediaPlayer.getVLCVout().areViewsAttached()) {//禁止双线程后台运行
-                    LogUtils.i(tag, "---多线程出错----没有surface  禁止双线程后台运行");
-                    if (mMediaPlayer != null) {
+                if (currentState == STATE_PAUSE || !isAttachedSurface) {
+                    if (isPrepare()) {
                         mMediaPlayer.pause();
                     }
                 }
@@ -425,7 +441,7 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
                             mediaListenerEvent.eventPlay(false);
                     }
                 });
-                LogUtils.i(tag, "Paused");
+                L.i(tag, "Paused");
 
                 break;
             case MediaPlayer.Event.TimeChanged://TimeChanged   15501
@@ -447,27 +463,27 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
                 // LogUtils.i(tag, "PositionChanged" + event.getPositionChanged());
                 break;
             case MediaPlayer.Event.Vout:
-                LogUtils.i(tag, "Vout" + event.getVoutCount());
+                L.i(tag, "Vout" + event.getVoutCount());
                 break;
             case MediaPlayer.Event.ESAdded:
-                LogUtils.i(tag, "ESAdded");
+                L.i(tag, "ESAdded");
                 break;
             case MediaPlayer.Event.ESDeleted:
-                LogUtils.i(tag, "ESDeleted");
+                L.i(tag, "ESDeleted");
                 break;
             case MediaPlayer.Event.SeekableChanged:
                 canSeek = event.getSeekable();
-                LogUtils.i(tag, "SeekableChanged=" + canSeek);
+                L.i(tag, "SeekableChanged=" + canSeek);
                 if (mMediaPlayer.getLength() > 0 && seekTime > mMediaPlayer.getLength()) {  //避免出错，特别是保存上一次播放位置时候，可能保存出错
                     mMediaPlayer.setTime(0);
                 }
                 break;
             case MediaPlayer.Event.PausableChanged:
                 canPause = event.getPausable();
-                LogUtils.i(tag, "PausableChanged=" + canPause);
+                L.i(tag, "PausableChanged=" + canPause);
                 break;
             case MediaPlayer.Event.Buffering:
-                LogUtils.i(tag, "MediaPlayer.Event.Buffering" + event.getBuffering());
+                L.i(tag, "MediaPlayer.Event.Buffering" + event.getBuffering());
                 mainHandler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -475,16 +491,20 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
                             mediaListenerEvent.eventBuffing(MediaListenerEvent.EVENT_BUFFING, event.getBuffering(), event.getBuffering() < 100f);
                     }
                 });
+                if (currentState == STATE_PAUSE || !isAttachedSurface) {//关屏有音 bug
+                    if (event.getBuffering() == 100f && isPrepare()) {
+                        mMediaPlayer.pause();
+                    }
+                }
                 break;
             case MediaPlayer.Event.MediaChanged:
-                LogUtils.i(tag, "MediaChanged=" + event.getEsChangedType());
+                L.i(tag, "MediaChanged=" + event.getEsChangedType());
                 break;
             default:
-                LogUtils.i(tag, "event.type=" + event.type);
+                L.i(tag, "event.type=" + event.type);
                 break;
         }
     }
-
 
     @Override
     public boolean isPrepare() {
@@ -498,18 +518,24 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
 
     @Override
     public void start() {
-        LogUtils.i(tag, "start");
-        if (isPrepare())
+        L.i(tag, "start");
+        setPlayState(STATE_PLAY);
+        if (isPrepare() && isAttachedSurface)
             mMediaPlayer.play();
     }
 
     @Override
     public void pause() {
+        setPlayState(STATE_PAUSE);
         if (isPrepare() && canPause) {
             mMediaPlayer.pause();
         }
     }
 
+    private void setPlayState(int state) {
+        currentState = state;
+        mPlayerStateCallback.setPlayerState(currentState);
+    }
 
     @Override
     public long getDuration() {
@@ -526,6 +552,11 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
         return 0;
     }
 
+    @Override
+    public int getPlayState() {
+        return currentState;
+    }
+
     private boolean isSeeking;
 
     @Override
@@ -536,7 +567,6 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
             isSeeking = false;
         }
     }
-
 
     @Override
     public boolean isPlaying() {
@@ -582,16 +612,20 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
         return speed;
     }
 
-
     private MediaListenerEvent mediaListenerEvent;
 
     public void setMediaListenerEvent(MediaListenerEvent mediaListenerEvent) {
         this.mediaListenerEvent = mediaListenerEvent;
     }
 
-
     public void setVideoSizeChange(VideoSizeChange videoSizeChange) {
         this.videoSizeChange = videoSizeChange;
+    }
+
+    public Media.VideoTrack getVideoTrack() {
+        if (isPrepare())
+            return mMediaPlayer.getCurrentVideoTrack();
+        return null;
     }
 
     private VideoSizeChange videoSizeChange;
@@ -599,10 +633,18 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
     @Override
     public void onNewVideoLayout(IVLCVout vlcVout, int width, int height, int visibleWidth, int visibleHeight, int sarNum, int sarDen) {
         if (videoSizeChange != null) {
-            videoSizeChange.onVideoSizeChanged(width, height, visibleWidth, visibleHeight, sarNum, sarDen);
+            if (orientation == -1) {
+                Media.VideoTrack videoTrack = getVideoTrack();
+                if (videoTrack != null) {
+                    orientation = videoTrack.orientation;
+                    L.i(tag, "videoTrack=" + videoTrack.toString());
+                } else {
+                    orientation = 0;
+                }
+            }
+            videoSizeChange.onVideoSizeChanged(width, height, visibleWidth, visibleHeight, orientation);
         }
     }
-
 
     @Override
     public void onSurfacesCreated(IVLCVout vlcVout) {
@@ -612,5 +654,13 @@ public class VlcPlayer implements MediaPlayerControl, Handler.Callback, IVLCVout
     @Override
     public void onSurfacesDestroyed(IVLCVout vlcVout) {
 
+    }
+
+    public void setPlayerStateCallback(PlayerStateImpl playerStateCallback) {
+        mPlayerStateCallback = playerStateCallback;
+    }
+
+    public interface PlayerStateImpl {
+        void setPlayerState(int playerState);
     }
 }

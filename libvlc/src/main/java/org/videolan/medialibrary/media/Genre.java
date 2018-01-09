@@ -12,8 +12,8 @@ public class Genre extends MediaLibraryItem {
     }
 
     public Album[] getAlbums() {
-       Medialibrary ml = Medialibrary.getInstance();
-       return ml != null && ml.isInitiated() ? nativeGetAlbumsFromGenre(ml, mId) : new Album[0];
+        Medialibrary ml = Medialibrary.getInstance();
+        return ml != null && ml.isInitiated() ? nativeGetAlbumsFromGenre(ml, mId) : new Album[0];
     }
 
     public Artist[] getArtists() {
@@ -32,7 +32,9 @@ public class Genre extends MediaLibraryItem {
     }
 
     private native Album[] nativeGetAlbumsFromGenre(Medialibrary ml, long mId);
+
     private native Artist[] nativeGetArtistsFromGenre(Medialibrary ml, long mId);
+
     private native MediaWrapper[] nativeGetTracksFromGenre(Medialibrary ml, long mId);
 
     public static Parcelable.Creator<Genre> CREATOR
@@ -45,6 +47,7 @@ public class Genre extends MediaLibraryItem {
             return new Genre[size];
         }
     };
+
     public Genre(Parcel in) {
         super(in);
     }

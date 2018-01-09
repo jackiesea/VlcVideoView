@@ -1,23 +1,3 @@
-/*****************************************************************************
- * public class IVLCVout.java
- *****************************************************************************
- * Copyright © 2015 VLC authors, VideoLAN and VideoLabs
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
- *****************************************************************************/
-
 package org.videolan.libvlc;
 
 import android.annotation.TargetApi;
@@ -38,13 +18,13 @@ public interface IVLCVout {
          * LayoutsParams accordingly. If width and height are 0, LayoutParams should be reset to the
          * initial state (MATCH_PARENT).
          *
-         * @param vlcVout vlcVout
-         * @param width Frame width
-         * @param height Frame height
-         * @param visibleWidth Visible frame width
+         * @param vlcVout       vlcVout
+         * @param width         Frame width
+         * @param height        Frame height
+         * @param visibleWidth  Visible frame width
          * @param visibleHeight Visible frame height
-         * @param sarNum Surface aspect ratio numerator
-         * @param sarDen Surface aspect ratio denominator
+         * @param sarNum        Surface aspect ratio numerator
+         * @param sarDen        Surface aspect ratio denominator
          */
         @MainThread
         void onNewVideoLayout(IVLCVout vlcVout, int width, int height,
@@ -67,6 +47,7 @@ public interface IVLCVout {
 
     /**
      * Set a surfaceView used for video out.
+     *
      * @see #attachViews()
      */
     @MainThread
@@ -74,6 +55,7 @@ public interface IVLCVout {
 
     /**
      * Set a TextureView used for video out.
+     *
      * @see #attachViews()
      */
     @MainThread
@@ -82,9 +64,10 @@ public interface IVLCVout {
 
     /**
      * Set a surface used for video out.
-     * @param videoSurface if surfaceHolder is null, this surface must be valid and attached.
+     *
+     * @param videoSurface  if surfaceHolder is null, this surface must be valid and attached.
      * @param surfaceHolder optional, used to configure buffers geometry before Android ICS
-     * and to get notified when surface is destroyed.
+     *                      and to get notified when surface is destroyed.
      * @see #attachViews()
      */
     @MainThread
@@ -92,6 +75,7 @@ public interface IVLCVout {
 
     /**
      * Set a SurfaceTexture used for video out.
+     *
      * @param videoSurfaceTexture this surface must be valid and attached.
      * @see #attachViews()
      */
@@ -101,6 +85,7 @@ public interface IVLCVout {
 
     /**
      * Set a surfaceView used for subtitles out.
+     *
      * @see #attachViews()
      */
     @MainThread
@@ -108,6 +93,7 @@ public interface IVLCVout {
 
     /**
      * Set a TextureView used for subtitles out.
+     *
      * @see #attachViews()
      */
     @MainThread
@@ -116,9 +102,10 @@ public interface IVLCVout {
 
     /**
      * Set a surface used for subtitles out.
+     *
      * @param subtitlesSurface if surfaceHolder is null, this surface must be valid and attached.
-     * @param surfaceHolder optional, used to configure buffers geometry before Android ICS
-     * and to get notified when surface is destroyed.
+     * @param surfaceHolder    optional, used to configure buffers geometry before Android ICS
+     *                         and to get notified when surface is destroyed.
      * @see #attachViews()
      */
     @MainThread
@@ -126,6 +113,7 @@ public interface IVLCVout {
 
     /**
      * Set a SurfaceTexture used for subtitles out.
+     *
      * @param subtitlesSurfaceTexture this surface must be valid and attached.
      * @see #attachViews()
      */
@@ -135,13 +123,13 @@ public interface IVLCVout {
 
     /**
      * Attach views with an OnNewVideoLayoutListener
-     *
+     * <p>
      * This must be called afters views are set and before the MediaPlayer is first started.
-     *
+     * <p>
      * If onNewVideoLayoutListener is not null, the caller will handle the video layout that is
      * needed by the "android-display" "vout display" module. Even if that case, the OpenGL ES2
      * could still be used.
-     *
+     * <p>
      * If onNewVideoLayoutListener is null, the caller won't handle the video layout that is
      * needed by the "android-display" "vout display" module. Therefore, only the OpenGL ES2
      * "vout display" module will be used (for hardware and software decoding).
@@ -193,17 +181,19 @@ public interface IVLCVout {
 
     /**
      * Send a mouse event to the native vout.
+     *
      * @param action see ACTION_* in {@link android.view.MotionEvent}.
      * @param button see BUTTON_* in {@link android.view.MotionEvent}.
-     * @param x x coordinate.
-     * @param y y coordinate.
+     * @param x      x coordinate.
+     * @param y      y coordinate.
      */
     @MainThread
     void sendMouseEvent(int action, int button, int x, int y);
 
     /**
      * Send the the window size to the native vout.
-     * @param width width of the window.
+     *
+     * @param width  width of the window.
      * @param height height of the window.
      */
     @MainThread
