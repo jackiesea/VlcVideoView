@@ -43,6 +43,8 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 
+import static org.videolan.vlc.util.EnumConfig.PlayState.STATE_LOAD;
+import static org.videolan.vlc.util.EnumConfig.PlayState.STATE_PLAY;
 import static org.videolan.vlc.util.SpConfig.PREFIX_VIDEO_PLAY_POSITION;
 
 public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarChangeListener, GestureDetector.OnGestureListener, View.OnClickListener {
@@ -88,8 +90,6 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
     private float mMaxBrightness = 255.0f;
     private static final int MIN_BRIGHTNESS = 10;
     private long mCurDownPlayingTime = 0;
-    private long mCurPlayTime = 0;
-    private long mLastPlayTime = 0;
     private float mDownX = 0;
     private float mDownY = 0;
 
@@ -343,19 +343,18 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
                 .doOnNext(new Consumer<Long>() {
                     @Override
                     public void accept(Long aLong) throws Exception {
-                        if (mCurPlayTime != mLastPlayTime) {
-                            mLastPlayTime = mCurPlayTime;
-                            long allTime = mVideoView.getDuration();
+                        if ((getPlayState() == STATE_LOAD || getPlayState() == STATE_PLAY) && mBufferingLayout.getVisibility() != View.VISIBLE
+                                && mVideoBottomLayout.getVisibility() == VISIBLE) {   //播放非缓冲且显示才更新
+                            long curTime = getCurPlayTime();
+                            long totalTime = getTotalPlayTime();
 
-                            if (mVideoBottomLayout.getVisibility() == VISIBLE) {    //控件显示方才更新播放进度
-                                if (allTime == 0) { //防止出错
-                                    mVideoSeekBar.setProgress(0);
-                                } else {
-                                    int curProgress = (int) (mCurPlayTime * 100 / allTime);
-                                    mVideoSeekBar.setProgress(CoreUtil.getPlayProgress(curProgress));
-                                }
-                                mVideoTimeText.setText(CoreUtil.getPlayTime(mCurPlayTime, allTime));
+                            if (totalTime == 0) { //防止出错
+                                mVideoSeekBar.setProgress(0);
+                            } else {
+                                int curProgress = (int) (curTime * 100 / totalTime);
+                                mVideoSeekBar.setProgress(CoreUtil.getPlayProgress(curProgress));
                             }
+                            mVideoTimeText.setText(CoreUtil.getPlayTime(curTime, totalTime));
                         }
                     }
                 });
@@ -440,7 +439,7 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
                     GESTURE_FLAG = GESTURE_MODIFY_VOLUME;
                 }
             }
-            mCurDownPlayingTime = mVideoView.getCurrentPosition();
+            mCurDownPlayingTime = getCurPlayTime();
         }
 
         // 如果每次触摸屏幕后第一次scroll是调节进度，那之后的scroll事件都处理音量进度，直到离开屏幕执行下一次操作
@@ -455,16 +454,16 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
                 }
             } else if (distanceX <= -DensityUtil.dip2px(mContext, STEP_PROGRESS)) {// 快进
                 mVideoGestureImg.setImageResource(R.drawable.seek_forward);
-                if (mCurDownPlayingTime < mVideoView.getDuration()) {// 避免超过总时长
+                if (mCurDownPlayingTime < getTotalPlayTime()) {// 避免超过总时长
                     mCurDownPlayingTime += 3000;// scroll执行一次快进3秒
                 } else {
-                    mCurDownPlayingTime = mVideoView.getDuration() - 1000;
+                    mCurDownPlayingTime = getTotalPlayTime() - 1000;
                 }
             }
             if (mCurDownPlayingTime < 0) {
                 mCurDownPlayingTime = 0;
             }
-            mVideoGestureText.setText(CoreUtil.getPlayTime(mCurDownPlayingTime, mVideoView.getDuration()));
+            mVideoGestureText.setText(CoreUtil.getPlayTime(mCurDownPlayingTime, getTotalPlayTime()));
         } else if (GESTURE_FLAG == GESTURE_MODIFY_BRIGHT) {
             mVideoGestureImg.setImageResource(R.drawable.brightness);
             int slideHeight = mRootLayout.getHeight() / 2;
@@ -572,7 +571,7 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
         } else if (state == EnumConfig.ProgressState.STOP) {
 
         } else {
-            int time = (int) (progress * mVideoView.getDuration() / 100);
+            int time = (int) (progress * getTotalPlayTime() / 100);
             mVideoView.seekTo(time);
             resetHideController(CONTROLLER_HIDE_DELAY, false);
         }
@@ -653,7 +652,7 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
     //保存视频播放位置
     public void saveVideoPlayPosition() {
         if (!mIsCompleted && !mCurPlayVideoAccount.isEmpty() && !mCurPlayVideoId.isEmpty()) {
-            SpUtils.put(mContext, PREFIX_VIDEO_PLAY_POSITION + mCurPlayVideoAccount, mCurPlayVideoId, String.valueOf(getCurPlayingTime()));
+            SpUtils.put(mContext, PREFIX_VIDEO_PLAY_POSITION + mCurPlayVideoAccount, mCurPlayVideoId, String.valueOf(getCurPlayTime()));
         }
     }
 
@@ -747,8 +746,8 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
         public void setPlayState(int playState) {
             L.e("playState " + playState);
             switch (playState) {
-                case EnumConfig.PlayState.STATE_LOAD:
-                case EnumConfig.PlayState.STATE_PLAY:
+                case STATE_LOAD:
+                case STATE_PLAY:
                     mVideoStateImg.setImageResource(R.drawable.biz_video_pause);
                     break;
                 default:
@@ -757,9 +756,9 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
             }
 
             //设置屏幕常亮与否
-            if ((playState == EnumConfig.PlayState.STATE_PLAY) && !CoreUtil.isKeepScreenOn(mContext)) {
+            if ((playState == STATE_PLAY) && !CoreUtil.isKeepScreenOn(mContext)) {
                 CoreUtil.keepScreenOnOff(mContext, true);
-            } else if (!(playState == EnumConfig.PlayState.STATE_PLAY) && CoreUtil.isKeepScreenOn(mContext)) {
+            } else if (!(playState == STATE_PLAY) && CoreUtil.isKeepScreenOn(mContext)) {
                 CoreUtil.keepScreenOnOff(mContext, false);
             }
         }
@@ -804,7 +803,7 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
             }
 
             if (!mIsCompleted && mVideoView != null) {
-                if (mVideoView.getPlayState() == EnumConfig.PlayState.STATE_PLAY) {
+                if (mVideoView.getPlayState() == STATE_PLAY) {
                     mVideoView.pause();
                     mVideoView.removeCallbacks(mVideoReconnect);
                     mVideoReconnect = new Runnable() {
@@ -847,12 +846,15 @@ public class MyVlcVideoView extends RelativeLayout implements SeekBar.OnSeekBarC
 
         @Override
         public void eventTimeChanged(long playTime) {
-            mCurPlayTime = playTime;
         }
     };
 
-    public long getCurPlayingTime() {
-        return mCurPlayTime;
+    public long getCurPlayTime() {
+        return mVideoView.getCurrentPosition();
+    }
+
+    public long getTotalPlayTime() {
+        return mVideoView.getDuration();
     }
 
     public boolean isCurPlayCompleted() {
