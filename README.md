@@ -1,4 +1,4 @@
-### MrCSH_VlcVideoView
+### VlcVideoView
 
 基于mengzhidaren的Vlc-sdk-lib（lib版本号见libvlc文件夹下的version）修改，感谢<br>
 
